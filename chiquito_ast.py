@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 # from collections import defaultdict
 # from weakref import ref
-from util import uuid
+from PyChiquito.util import uuid
 
 class Circuit:
     def __init__(self):
