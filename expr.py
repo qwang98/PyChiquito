@@ -1,33 +1,46 @@
-from typing import TypeVar, Generic, List
+from typing import TypeVar, Generic, List, Dict, List
 
 F = TypeVar('F')  # Type variable representing the generic type used in Expr
 
-class Expr(Generic[F]):
-    def __init__(self, value: F):
-        self.value = value
+class Expr:
+    def __init__(self, variant: str):
+        # Ignore Halo2 types
+        if variant not in ["Const", "Sum", "Mul", "Neg", "Pow", "Query"]:
+            print("Invalid variant for Expr")
+            # TODO: panic
+        self.variant = variant
+        self.data: Dict = {}
+        self.data['expr']: List[Expr] = []
+        self.data['pow']: int = None
+        self.data['queriable']: Queriable = None
 
-class Sum(Expr[F]):
-    def __init__(self, expressions: List[Expr[F]]):
-        self.expressions = expressions
-
-class Mul(Expr[F]):
-    def __init__(self, expressions: List[Expr[F]]):
-        self.expressions = expressions
-
-class Neg(Expr[F]):
-    def __init__(self, expression: Expr[F]):
-        self.expression = expression
-
-class Pow(Expr[F]):
-    def __init__(self, expression: Expr[F], power: int):
-        self.expression = expression
-        self.power = power
-
-class Query(Expr[F]):
-    def __init__(self, queriable: Queriable[F]):
-        self.queriable = queriable
-
-class Halo2Expr(Expr[F]):
-    def __init__(self, expression: Expression[F]):
-        self.expression = expression
-
+    def __add__(self, rhs: Expr):
+        if self.variant == "Sum":
+            self.data["expr"].append(rhs)
+            return self
+        else:
+            out = Expr("Sum")
+            out.data["expr"].extend([self, rhs])
+            return out
+    
+    def __sub__(self, rhs: Expr):
+        neg = Expr("Neg")
+        neg.data["expr"].append(rhs)
+        if self.variant == "Sum":
+            self.data["expr"].append(neg)
+            return self
+        else:
+            out = Expr("Sum")
+            out.data["expr"].extend([self, rhs])
+            return out
+    
+    def __mul__(self, rhs: Expr):
+        if self.variant == "Mul":
+            self.data["expr"].append(rhs)
+            return self
+        else:
+            out = Expr("Mul")
+            out.data["expr"].extend([self, rhs])
+            return out
+        
+    
