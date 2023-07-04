@@ -3,6 +3,74 @@ from typing import List, Dict, Optional
 # from weakref import ref
 from PyChiquito.util import uuid
 
+class SharedSignal:
+    def __init__(self, phase: int, annotation: str):
+        self.id: int = uuid()
+        self.phase = phase
+        self.annotation = annotation
+
+class FixedSignal:
+    def __init__(self, annotation: str):
+        self.id: int = uuid()
+        self.annotation = annotation
+
+class ForwardSignal:
+    def __init__(self, phase: int, annotation: str):
+        self.id: int = uuid()
+        self.phase = phase
+        self.annotation = annotation
+
+class InternalSignal:
+    def __init__(self, annotation: str):
+        self.id = uuid()
+        self.annotation = annotation
+
+class StepType:
+    def __init__(self, id: int, name: str):
+        self.id = id
+        self.name = name
+        self.signals: List[InternalSignal] = []
+        self.constraints: List[Constraint] = []
+        self.transition_constraints: List[TransitionConstraint] = []
+        # self.lookups: List[Lookup] = []
+        self.annotations: Dict[int, str] = {}
+        # self.wg: StepWitnessGen = StepWitnessGen(F, Args)
+
+    def add_signal(self, name: str) -> InternalSignal:
+        signal = InternalSignal(name)
+        self.signals.append(signal)
+        self.annotations[signal.id] = name
+        return signal
+
+    def add_constr(self, annotation: str, expr: Expr):
+        condition = Constraint(annotation, expr)
+        self.constraints.append(condition)
+
+    def add_transition(self, annotation: str, expr: Expr):
+        condition = TransitionConstraint(annotation, expr)
+        self.transition_constraints.append(condition)
+
+    # def set_wg(self, defn):
+    #     self.wg = defn
+
+    def __eq__(self, other):
+        if isinstance(other, StepType):
+            return self.id == other.id
+        return False
+
+    def __hash__(self):
+        return hash(self.id)
+
+class Constraint:
+    def __init__(self, annotation: str, expr: Expr):
+        self.annotation = annotation
+        self.expr = expr
+
+class TransitionConstraint:
+    def __init__(self, annotation: str, expr: Expr):
+        self.annotation = annotation
+        self.expr = expr
+
 class Circuit:
     def __init__(self):
         self.forward_signals: List[ForwardSignal] = []
@@ -77,71 +145,3 @@ class Circuit:
             return self.step_types[uuid]
         else:
             raise ValueError("step type not found")
-
-class ForwardSignal:
-    def __init__(self, phase: int, annotation: str):
-        self.id: int = uuid()
-        self.phase = phase
-        self.annotation = annotation
-
-class SharedSignal:
-    def __init__(self, phase: int, annotation: str):
-        self.id: int = uuid()
-        self.phase = phase
-        self.annotation = annotation
-
-class FixedSignal:
-    def __init__(self, annotation: str):
-        self.id: int = uuid()
-        self.annotation = annotation
-
-class StepType:
-    def __init__(self, id: int, name: str):
-        self.id = id
-        self.name = name
-        self.signals: List[InternalSignal] = []
-        self.constraints: List[Constraint] = []
-        self.transition_constraints: List[TransitionConstraint] = []
-        # self.lookups: List[Lookup] = []
-        self.annotations: Dict[int, str] = {}
-        # self.wg: StepWitnessGen = StepWitnessGen(F, Args)
-
-    def add_signal(self, name: str) -> InternalSignal:
-        signal = InternalSignal(name)
-        self.signals.append(signal)
-        self.annotations[signal.id] = name
-        return signal
-
-    def add_constr(self, annotation: str, expr: Expr):
-        condition = Constraint(annotation, expr)
-        self.constraints.append(condition)
-
-    def add_transition(self, annotation: str, expr: Expr):
-        condition = TransitionConstraint(annotation, expr)
-        self.transition_constraints.append(condition)
-
-    # def set_wg(self, defn):
-    #     self.wg = defn
-
-    def __eq__(self, other):
-        if isinstance(other, StepType):
-            return self.id == other.id
-        return False
-
-    def __hash__(self):
-        return hash(self.id)
-
-class InternalSignal:
-    def __init__(self, annotation: str):
-        self.id = uuid()
-        self.annotation = annotation
-
-class Constraint:
-    def __init__(self, annotation: str, expr: Expr):
-        self.annotation = annotation
-        self.expr = expr
-
-class TransitionConstraint:
-    def __init__(self, annotation: str, expr: Expr):
-        self.annotation = annotation
-        self.expr = expr
