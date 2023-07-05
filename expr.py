@@ -11,6 +11,7 @@ class Expr:
             raise ValueError("Invalid variant for Expr.")
         self.variant = variant
         self.data: Dict = {}
+        self.data['value']: int = None # TODO: make this a field element
         self.data['expr']: List[Expr] = []
         self.data['pow']: int = None 
         self.data['queriable']: Queriable = None
