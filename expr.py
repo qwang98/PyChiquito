@@ -43,4 +43,12 @@ class Expr:
             out.data["expr"].extend([self, rhs])
             return out
         
+    def __neg__(self):
+        if self.variant == "Neg":
+            return self.data["expr"][0]
+        else:
+            out = Expr("Neg")
+            out.data["expr"].append(self)
+            return out
+        
     

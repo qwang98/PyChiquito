@@ -7,6 +7,7 @@ class CircuitContext:
 
     def forward(self, name: str) -> Queriable:
         
+        
 
 def circuit(name: str, circuit_context_lambda: Callable[[CircuitContext], None]) -> Circuit:
     ctx = CircuitContext()
