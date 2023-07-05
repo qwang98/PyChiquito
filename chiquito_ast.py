@@ -1,7 +1,9 @@
-from typing import List, Dict, Optional
+from typing import Callable, List, Dict, Optional
 # from collections import defaultdict
 # from weakref import ref
 from PyChiquito.util import uuid
+from expr import Expr
+from dsl import StepTypeHandler
 
 class SharedSignal:
     def __init__(self, phase: int, annotation: str):
@@ -35,6 +37,9 @@ class StepType:
         # self.lookups: List[Lookup] = []
         self.annotations: Dict[int, str] = {}
         # self.wg: StepWitnessGen = StepWitnessGen(F, Args)
+        self.first_step: Optional[int] = None
+        self.last_step: Optional[int] = None
+        self.num_steps: int = None
 
     def add_signal(self, name: str) -> InternalSignal:
         signal = InternalSignal(name)
@@ -80,8 +85,8 @@ class Circuit:
         # self.halo2_advice: List[ImportedHalo2Advice] = []
         # self.halo2_fixed: List[ImportedHalo2Fixed] = []
         self.step_types: Dict[int, StepType] = {}
-        # self.trace: Optional[ref] = None  # We are using weakref.ref as a substitute for Rc
-        # self.fixed_gen: Optional[ref] = None  # We are using weakref.ref as a substitute for Rc
+        self.trace: Optional[callable] = None
+        self.fixed_gen: Optional[callable] = None 
         self.annotations: Dict[int, str] = {}
         # self.first_step: Optional[StepTypeHandler] = None
         # self.last_step: Optional[StepTypeHandler] = None
@@ -127,18 +132,17 @@ class Circuit:
         self.step_types[step.id] = step
         return step.id
 
-    # set_trace and set_fixed_gen are commented out
-    # def set_trace(self, def: Callable[[TraceContext[StepArgs], TraceArgs], None]):
-    #     if self.trace is None:
-    #         self.trace = def
-    #     else:
-    #         raise ValueError("circuit cannot have more than one trace generator")
+    def set_trace(self, func: Callable[[TraceContext, TraceArgs], None]):
+        if self.trace is not None:
+            raise Exception("Circuit cannot have more than one trace generator.")
+        else: 
+            self.trace = func
 
-    # def set_fixed_gen(self, def_gen):
-    #     if self.fixed_gen is None:
-    #         self.fixed_gen = def_gen
-    #     else:
-    #         raise ValueError("circuit cannot have more than one fixed generator")
+    def set_fixed_gen(self, func: Callable[[FixedGenContext], None]):
+        if self.fixed_gen is not None:
+            raise Exception("Circuit cannot have more than one fixed generator.")
+        else: 
+            self.fixed_gen = func
 
     def get_step_type(self, uuid: int) -> StepType:
         if uuid in self.step_types:

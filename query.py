@@ -13,7 +13,7 @@ class Queriable:
         self.data['shared']: SharedSignal = None
         self.data['fixed']: FixedSignal = None
         self.data['step_type_next']: StepTypeHandler = None
-        self.data['rotation']: int = 0
+        self.data['rotation']: int = None
 
     def next(self) -> Queriable:
         if self.variant == "Forward":

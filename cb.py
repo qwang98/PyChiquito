@@ -2,6 +2,7 @@ from typing import Any, TypeVar, Generic, List, Dict, List
 from chiquito_ast import InternalSignal, ForwardSignal, SharedSignal, FixedSignal
 from expr import Expr
 from query import Queriable
+from dsl import StepTypeHandler
 
 class Constraint:
     def __init__(self, annotation: str, expr: Expr, typing: str):
