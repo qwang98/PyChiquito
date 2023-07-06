@@ -1,9 +1,8 @@
 from __future__ import annotations
-from typing import TypeVar, Generic, List, Dict, List
 from chiquito_ast import InternalSignal, ForwardSignal, SharedSignal, FixedSignal
-from expr import Expr, Query
 from dataclasses import dataclass
 from dsl import StepTypeHandler
+from py_ecc import bn128
 
 F = bn128.FQ
 
