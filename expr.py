@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, TypeVar, Generic, List, Dict, List
+from typing import List
 from cb import Constraint
 from py_ecc import bn128
 from dataclasses import dataclass
@@ -7,7 +7,6 @@ from query import Queriable
 
 F = bn128.FQ
 
-# #[derive(Clone)]
 # pub enum Expr<F> {
 #     Const(F),
 #     Sum(Vec<Expr<F>>),
@@ -49,22 +48,33 @@ class Query:
 class Expr:
     enum: Const | Sum | Mul | Neg | Pow | Query
 
-    # __str__ method is invoked by print() and str()
     def __str__(self: Expr) -> str:
-        def fmt_expr(expr: Expr) -> str:
-            if isinstance(expr, Const):
-                return str(expr.value)
-            elif isinstance(expr, Sum):
-                return "(" + " + ".join([fmt_expr(e) for e in expr.exprs]) + ")"
-            elif isinstance(expr, Mul):
-                return "(" + " * ".join([fmt_expr(e) for e in expr.exprs]) + ")"
-            elif isinstance(expr, Neg):
-                return "-" + fmt_expr(expr.expr)
-            elif isinstance(expr, Pow):
-                return "(" + fmt_expr(expr.expr) + ")^" + str(expr.pow)
-            elif isinstance(expr, Query):
-                return str(expr.queriable)
-            else:
+        match expr.enum:
+            case Const(value):
+                return str(value)
+            case Sum(exprs):
+                result = "("
+                for i, expr in enumerate(exprs):
+                    match expr.enum:
+                        case Neg(expr):
+                            if i == 0:
+                                result += "-"
+                            else:
+                                result += " - "
+                        case _:
+                            result += " + "
+                    result += str(expr)
+                result += ")"
+                return result
+            case Mul(exprs):
+                return "*".join([str(expr) for expr in exprs])
+            case Neg(expr):
+                return "(-" + str(expr) + ")"
+            case Pow(expr, pow):
+                return str(expr) + "^" + str(pow)
+            case Query(queriable):
+                return str(queriable)
+            case _:
                 raise ValueError("Invalid Expr enum type.")
              
     def __neg__(self: Expr) -> Expr:
@@ -115,7 +125,7 @@ class Expr:
         lhs = to_expr(lhs)
         return Expr(Pow(lhs, rhs))
 
-ToExpr = Expr | str | int | F | Queriable
+ToExpr = Expr | str | int | F | Queriable | Constraint
 
 def to_expr(v: ToExpr) -> Expr:
     if isinstance(v, Expr):
@@ -129,5 +139,7 @@ def to_expr(v: ToExpr) -> Expr:
             return Expr(Neg(Expr(Const(F(-v)))))
     elif isinstance(v, Queriable):
         return Expr(Query(v))
+    elif isinstance(v, Constraint):
+        return v.expr
     else:
-        raise TypeError(f"Type `{type(v)}` is not ToExpr (one of Expr, str, int, F, or Queriable).")
+        raise TypeError(f"Type `{type(v)}` is not ToExpr (one of Expr, str, int, F, Queriable, or Constraint).")

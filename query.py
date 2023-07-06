@@ -1,99 +1,120 @@
+from __future__ import annotations
 from typing import TypeVar, Generic, List, Dict, List
 from chiquito_ast import InternalSignal, ForwardSignal, SharedSignal, FixedSignal
-from expr import Expr
+from expr import Expr, Query
+from dataclasses import dataclass
+from dsl import StepTypeHandler
 
+F = bn128.FQ
+
+# pub enum Queriable<F> {
+#     Internal(InternalSignal),
+#     Forward(ForwardSignal, bool),
+#     Shared(SharedSignal, i32),
+#     Fixed(FixedSignal, i32),
+#     StepTypeNext(StepTypeHandler),
+#     Halo2AdviceQuery(ImportedHalo2Advice, i32),
+#     Halo2FixedQuery(ImportedHalo2Fixed, i32),
+#     #[allow(non_camel_case_types)]
+#     _unaccessible(PhantomData<F>),
+# }
+
+@dataclass
+class Internal:
+    signal: InternalSignal
+
+@dataclass
+class Forward:
+    signal: ForwardSignal
+    rotation: bool
+
+@dataclass
+class Shared:
+    signal: SharedSignal
+    rotation: int
+
+@dataclass
+class Fixed:
+    signal: FixedSignal
+    rotation: int
+
+@dataclass
+class StepTypeNext:
+    handler: StepTypeHandler
+
+# Ignored Queriable::Halo2AdviceQuery and Queriable::Halo2FixedQuery
+
+@dataclass
 class Queriable:
-    def __init__(self, variant: str):
-        if variant not in ["Internal", "Forward", "Shared", "Fixed", "StepTypeNext"]:
-            raise ValueError("Invalid variant for Queriable.")
-        self.variant = variant
-        self.data: Dict = {}
-        self.data['internal']: InternalSignal = None
-        self.data['forward']: ForwardSignal = None
-        self.data['shared']: SharedSignal = None
-        self.data['fixed']: FixedSignal = None
-        self.data['step_type_next']: StepTypeHandler = None
-        self.data['rotation']: int = None
+    enum: Internal | Forward | Shared | Fixed | StepTypeNext
 
-    def next(self) -> Queriable:
-        if self.variant == "Forward":
-            if self.data['rotation'] > 0:
-                raise ValueError("Cannot rotate forward signal twice")
-            else:
-                self.data['rotation'] += 1
-                return self
-        if self.variant in ["Shared", "Fixed"]:
-            self.data['rotation'] += 1
-            return self
-        else:
-            raise ValueError("Can only call `next` on a forward, shared, or fixed signal.")
-
-    def prev(self) -> Queriable:
-        if self.variant in ["Shared", "Fixed"]:
-            self.data['rotation'] -= 1
-            return self
-        else:
-            raise ValueError("Can only call `prev` on a shared or fixed signal.")
+    def next(self: Queriable) -> Queriable:
+        match self.enum:
+            case Forward(signal, rotation):
+                if rotation:
+                    raise ValueError("Cannot rotate Forward twice.")
+                else:
+                    return Queriable(Forward(signal, True))
+            case Shared(signal, rotation):
+                return Queriable(Shared(signal, rotation + 1))
+            case Fixed(signal, rotation):
+                return Queriable(Fixed(signal, rotation + 1))
+            case _:
+                raise ValueError("Can only call `next` on Forward, Shared, or Fixed.")
     
-    def rot(self, rotation: int) -> Queriable:
-        if self.variant in ["Shared", "Fixed"]:
-            self.data['rotation'] += rotation
-            return self
-        else:
-            raise ValueError("Can only call `rot` on a shared or fixed signal.")
+    def prev(self: Queriable) -> Queriable:
+        match self.enum:
+            case Shared(signal, rotation):
+                return Queriable(Shared(signal, rotation - 1))
+            case Fixed(signal, rotation):
+                return Queriable(Fixed(signal, rotation - 1))
+            case _:
+                raise ValueError("Can only call `prev` on Shared or Fixed.")
 
-    def uuid(self) -> int:
-        if self.variant == "Internal":
-            return self.data['internal'].id
-        elif self.variant == "Forward":
-            return self.data['forward'].id
-        elif self.variant == "Shared":
-            return self.data['shared'].id
-        elif self.variant == "Fixed":
-            return self.data['fixed'].id
-        elif self.variant == "StepTypeNext":
-            return self.data['step_type_next'].id
-        else:
-            raise ValueError("Invalid variant for Queriable.")
+    def rot(self: Queriable, rotation: int) -> Queriable:
+        match self.enum:
+            case Shared(signal, rot):
+                return Queriable(Shared(signal, rot + rotation))
+            case Fixed(signal, rot):
+                return Queriable(Fixed(signal, rot + rotation))
+            case _:
+                raise ValueError("Can only call `rot` on Shared or Fixed.")
     
-    def annotation(self) -> str:
-        if self.variant == "Internal":
-            return self.data['internal'].annotation
-        elif self.variant == "Forward":
-            if self.data['rotation'] == 0:
-                return self.data['forward'].annotation
-            elif self.data['rotation'] == 1:
-                return f"next({self.data['forward'].annotation})"
-            else:
-                raise ValueError("Invalid rotation value for forward signal.")
-        elif self.variant == "Shared":
-            if self.data['rotation'] != 0:
-                return f"{self.data['shared'].annotation}(rot {self.data['rotation']})"
-            else:
-                return self.data['shared'].annotation
-        elif self.variant == "Fixed":
-            if self.data['rotation'] != 0:
-                return f"{self.data['fixed'].annotation}(rot {self.data['rotation']})"
-            else:
-                return self.data['fixed'].annotation
-        elif self.variant == "StepTypeNext":
-            return self.data['step_type_next'].annotation
-        else:
-            raise ValueError("Invalid variant for Queriable.")
+    def uuid(self: Queriable) -> int:
+        match self.enum:
+            case Internal(signal):
+                return signal.id
+            case Forward(signal, _):
+                return signal.id
+            case Shared(signal, _):
+                return signal.id
+            case Fixed(signal, _):
+                return signal.id
+            case StepTypeNext(handler):
+                return handler.id
+            case _:
+                raise ValueError("Invalid Queriable enum type.")
 
-    def expr(self) -> Expr:
-        out = Expr("Query")
-        out.data["queriable"] = self
-        return out
-
-    def __add__(self, rhs: Expr):
-        return self.expr() + rhs
-
-    def __sub__(self, rhs: Expr):
-        return self.expr() - rhs
-    
-    def __mul__(self, rhs: Expr):
-        return self.expr() * rhs
-    
-    def __neg__(self):
-        return -self.expr()
+    def annotation(self: Queriable) -> str:
+        match self.enum:
+            case Internal(signal):
+                return signal.annotation
+            case Forward(signal, rotation):
+                if not rotation:
+                    return signal.annotation
+                else:
+                    return f"next({signal.annotation})"
+            case Shared(signal, rotation):
+                if rotation == 0:
+                    return signal.annotation
+                else:
+                    return f"{signal.annotation}(rot {rotation})"
+            case Fixed(signal, rotation):
+                if rotation == 0:
+                    return signal.annotation
+                else:
+                    return f"{signal.annotation}(rot {rotation})"
+            case StepTypeNext(handler):
+                return handler.annotation
+            case _:
+                raise ValueError("Invalid Queriable enum type.")
