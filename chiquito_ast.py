@@ -45,7 +45,7 @@ class Circuit:
     last_step: Optional[int]
     num_steps: int
 
-    # TODO: __str__
+    # TODO: __str__ (low priority as it's only used for debugging)
 
     def add_forward(self: Circuit, name: str, phase: int) -> ForwardSignal:
         signal = ForwardSignal(phase, name)
@@ -115,7 +115,7 @@ class StepType:
     # lookups: List[Lookup]
     annotations: Dict[int, str]
 
-    # TODO: __str__
+    # TODO: __str__ (low priority as it's only used for debugging)
 
     def __init__(self: StepType, id: int, name: str):
         self.id = id

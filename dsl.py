@@ -133,7 +133,7 @@ class StepTypeSetupContext:
         self.step_type.add_transition(constraint.annotation, constraint.expr)
 
     def enforce_constraint_typing(constraint: Constraint):
-        if constraint.typing != "AntiBooly":
+        if constraint.typing != Typing.AntiBooly:
             raise ValueError(f"Expected AntiBooly constraint, got {constraint.typing} (constraint: {constraint.annotation})")
 
     # TODO: implement add_lookup after lookup abstraction PR is merged.
