@@ -1,4 +1,9 @@
 # Technical Design
-- DSL functions for modifying AST in PyChiquito
+- Python functions for creating AST in PyChiquito
+  - Status: functions done, debugging Fibo example
+- Python functions for creating WG object and FG in PyChiquito
+  - Status: soon to start
 - Convert Rust module to Python library using PyO3 and Maturin
-- Call Chiquito functions in Python with AST in Python
+  - Status: research done, not implemented
+- Call Chiquito rust functions from Python with AST and WG object in Python
+  - Status: not started
