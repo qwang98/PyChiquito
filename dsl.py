@@ -2,7 +2,6 @@ from __future__ import annotations
 from chiquito_ast import Circuit, StepType
 from typing import Callable
 from query import Queriable, Forward, Internal, Shared, Fixed, StepTypeNext
-from expr import Expr
 from util import uuid
 from cb import Constraint, ToConstraint, to_constraint, Typing
 from dataclasses import dataclass
@@ -69,6 +68,8 @@ class CircuitContext:
     def pragma_num_steps(self, num_steps: int) -> None:
         self.circuit.num_steps = num_steps
 
+ToStepTypeDefInput = StepTypeHandler | str
+
 @dataclass
 class Handler:
     handler: StepTypeHandler
@@ -97,7 +98,7 @@ class StepTypeContext:
     def internal(self: StepTypeContext, name: str) -> Queriable:
         return Queriable(Internal(self.step_type.add_signal(name)))
 
-    def setup(self, setup_def: Callable[[StepTypeSetupContext], None]) -> None: # def is a keyword in python
+    def setup(self: StepTypeContext, setup_def: Callable[[StepTypeSetupContext], None]) -> None: # def is a keyword in python
         ctx = StepTypeSetupContext(self.step_type)
         setup_def(ctx)
     

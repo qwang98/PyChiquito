@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Callable, List, Dict, Optional
-from PyChiquito.util import uuid
+from util import uuid
 from expr import Expr
 from dsl import StepTypeHandler
 from dataclasses import dataclass
