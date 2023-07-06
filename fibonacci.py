@@ -15,20 +15,20 @@ class Fibonacci(CircuitContext):
         self.pragma_first_step(fibo_step)
         self.pragma_last_step(fibo_last_step)
         
-        fibo_step: StepTypeWGHandler = FiboStep(self).wg() # `step_type_def`, which returns StepTypeWGHandler, is no longer needed.
-        fibo_last_step: StepTypeWGHandler = FiboLastStep(self).wg()
+        self.fibo_step: StepTypeWGHandler = FiboStep(self).wg() # `step_type_def`, which returns StepTypeWGHandler, is no longer needed.
+        self.fibo_last_step: StepTypeWGHandler = FiboLastStep(self).wg()
 
     def trace(self: Fibonacci):
         def trace_def(ctx: TraceContext, values: TraceArgs): # TODO: Complete wit_gen.py and update.
-            ctx.add(fibo_step, (1, 1))
+            ctx.add(self.fibo_step, (1, 1))
             a = 1
             b = 2
             for i in range(1, 10):
-                ctx.add(fibo_step, (a, b))
+                ctx.add(self.fibo_step, (a, b))
                 prev_a = a
                 a = b
                 b += prev_a
-            ctx.add(fibo_last_step, (a, b))
+            ctx.add(self.fibo_last_step, (a, b))
         super().trace(trace_def)
 
 class FiboStep(StepTypeContext):
