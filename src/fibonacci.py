@@ -1,7 +1,7 @@
 from __future__ import annotations
-from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext, StepTypeWGHandler, StepTypeHandler
-from cb import Constraint
-from query import Queriable
+
+from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext, StepTypeWGHandler, StepTypeHandler, Constraint
+from chiquito_ast import Queriable
 
 class Fibonacci(CircuitContext):
     def __init__(self: Fibonacci):
