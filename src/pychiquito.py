@@ -1079,6 +1079,19 @@ class StepInstance:
     def assign(self: StepInstance, lhs: Queriable, rhs: F):
         self.assignments[lhs] = rhs
 
+    def __str__(self):
+        assignments_str = (
+            "\n\t\t\t\t" + ",\n\t\t\t\t".join(f"{lhs.annotation()} = {rhs}" for (lhs, rhs) in self.assignments.items()) + "\n\t\t\t"
+            if self.assignments
+            else ""
+        )
+        return (
+            f"StepInstance(\n"
+            f"\t\t\tstep_type_uuid={self.step_type_uuid},\n"
+            f"\t\t\tassignments={{{assignments_str}}},\n"
+            f"\t\t)"
+        )
+
 
 Witness = List[StepInstance]
 
@@ -1087,6 +1100,19 @@ Witness = List[StepInstance]
 class TraceWitness:
     step_instances: Witness = field(default_factory=list)
     height: int = 0
+
+    def __str__(self):
+        step_instances_str = (
+            "\n\t\t" + ",\n\t\t".join(str(step_instance) for step_instance in self.step_instances) + "\n\t"
+            if self.step_instances
+            else ""
+        )
+        return (
+            f"TraceWitness(\n"
+            f"\tstep_instances={{{step_instances_str}}},\n"
+            f"\theight={self.height},\n"
+            f")"
+        )
 
 
 @dataclass

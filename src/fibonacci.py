@@ -79,3 +79,161 @@ print(fibo.circuit) # Print ast::Circuit.
 fibo.trace()
 trace_generator = TraceGenerator(fibo.circuit.trace)
 print(trace_generator.generate(None)) # Print TraceWitness
+
+# ast::Circuit output:
+
+# Circuit(
+#         step_types={
+#                 3: StepType(
+#                         id=3,
+#                         name='fibo_step',
+#                         signals=[
+#                                 InternalSignal(id=5, annotation='c')
+#                         ],
+#                         constraints=[
+#                                 Constraint(
+#                                         annotation='((a + b) == c)',
+#                                         expr=(a + b - c)
+#                                 )
+#                         ],
+#                         transition_constraints=[
+#                                 TransitionConstraint((b == next(a))),
+#                                 TransitionConstraint((c == next(b)))
+#                         ],
+#                         annotations={
+#                                 5: c
+#                         }
+#                 ),
+#                 4: StepType(
+#                         id=4,
+#                         name='fibo_last_step',
+#                         signals=[
+#                                 InternalSignal(id=6, annotation='c')
+#                         ],
+#                         constraints=[
+#                                 Constraint(
+#                                         annotation='((a + b) == c)',
+#                                         expr=(a + b - c)
+#                                 )
+#                         ],
+#                         transition_constraints=[],
+#                         annotations={
+#                                 6: c
+#                         }
+#                 )
+#         },
+#         forward_signals=[
+#                 ForwardSignal(id=1, phase=0, annotation='a'),
+#                 ForwardSignal(id=2, phase=0, annotation='b')
+#         ],
+#         shared_signals=[],
+#         fixed_signals=[],
+#         exposed=[],
+#         annotations={
+#                 1: a,
+#                 2: b,
+#                 3: fibo_step,
+#                 4: fibo_last_step
+#         },
+#         trace=None,
+#         fixed_gen=None,
+#         first_step=3,
+#         last_step=4,
+#         num_steps=0
+# )
+
+# TraceWitness output:
+
+# TraceWitness(
+#         step_instances={
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 1,
+#                                 b = 1,
+#                                 c = 2
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 1,
+#                                 b = 2,
+#                                 c = 3
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 2,
+#                                 b = 3,
+#                                 c = 5
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 3,
+#                                 b = 5,
+#                                 c = 8
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 5,
+#                                 b = 8,
+#                                 c = 13
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 8,
+#                                 b = 13,
+#                                 c = 21
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 13,
+#                                 b = 21,
+#                                 c = 34
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 21,
+#                                 b = 34,
+#                                 c = 55
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 34,
+#                                 b = 55,
+#                                 c = 89
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=3,
+#                         assignments={
+#                                 a = 55,
+#                                 b = 89,
+#                                 c = 144
+#                         },
+#                 ),
+#                 StepInstance(
+#                         step_type_uuid=4,
+#                         assignments={
+#                                 a = 89,
+#                                 b = 144,
+#                                 c = 233
+#                         },
+#                 )
+#         },
+#         height=0,
+# )
