@@ -999,7 +999,7 @@ class Queriable:
     def __pow__(self: Queriable, rhs: int) -> Expr:
         lhs = to_expr(self)
         return Expr(Pow(lhs, rhs))
-    
+
     # __hash__ method is required, because Queriable is used as a key in the assignment dictionary.
     def __hash__(self: Queriable):
         return hash(self.uuid())
@@ -1081,7 +1081,11 @@ class StepInstance:
 
     def __str__(self):
         assignments_str = (
-            "\n\t\t\t\t" + ",\n\t\t\t\t".join(f"{lhs.annotation()} = {rhs}" for (lhs, rhs) in self.assignments.items()) + "\n\t\t\t"
+            "\n\t\t\t\t"
+            + ",\n\t\t\t\t".join(
+                f"{lhs.annotation()} = {rhs}" for (lhs, rhs) in self.assignments.items()
+            )
+            + "\n\t\t\t"
             if self.assignments
             else ""
         )
@@ -1103,7 +1107,11 @@ class TraceWitness:
 
     def __str__(self):
         step_instances_str = (
-            "\n\t\t" + ",\n\t\t".join(str(step_instance) for step_instance in self.step_instances) + "\n\t"
+            "\n\t\t"
+            + ",\n\t\t".join(
+                str(step_instance) for step_instance in self.step_instances
+            )
+            + "\n\t"
             if self.step_instances
             else ""
         )
