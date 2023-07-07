@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, List, Dict, Optional
+from typing import Callable, List, Dict, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from py_ecc import bn128
@@ -65,7 +65,7 @@ class CircuitContext:
     #     self.circuit.add_step_type_def(context.step_type)
     #     return result
     
-    def trace(self: CircuitContext, trace_def: Callable[[TraceContext, TraceArgs], None]):
+    def trace(self: CircuitContext, trace_def: Callable[[TraceContext, Any], None]): # Any instead of TraceArgs
         self.circuit.set_trace(trace_def)
 
     def fixed_gen(self: CircuitContext, fixed_gen_def: Callable[[FixedGenContext], None]):
@@ -101,7 +101,7 @@ class StepTypeContext:
         ctx = StepTypeSetupContext(self.step_type)
         setup_def(ctx)
     
-    def wg(self, wg_def: Callable[[StepInstance, Args], None]) -> StepTypeWGHandler:
+    def wg(self, wg_def: Callable[[StepInstance, Any], None]) -> StepTypeWGHandler: # Any instead of Args
         return StepTypeWGHandler(
             self.step_type.id, 
             self.step_type.name,
@@ -146,7 +146,7 @@ class StepTypeHandler:
 class StepTypeWGHandler:
     id: int
     annotation: str
-    wg: Callable[[StepInstance, Args], None]
+    wg: Callable[[StepInstance, Any], None] # Any instead of Args
 
 def circuit(name: str, circuit_context_def: Callable[[CircuitContext], None]) -> Circuit:
     ctx = CircuitContext()
@@ -413,7 +413,7 @@ class Circuit:
         self.step_types[step.id] = step
         return step.id
 
-    def set_trace(self, trace_def: Callable[[TraceContext, TraceArgs], None]):
+    def set_trace(self, trace_def: Callable[[TraceContext, Any], None]): # Any instead of TraceArgs
         if self.trace is not None:
             raise Exception("Circuit cannot have more than one trace generator.")
         else: 
@@ -898,3 +898,75 @@ def to_constraint(v: ToConstraint) -> Constraint:
                 return Constraint(v.annotation(), Expr(Query(v)), Typing.Unknown)
     else:
         raise TypeError(f"Type `{type(v)}` is not ToConstraint (one of Constraint, Expr, int, F, or Queriable).")
+
+###########
+# wit_gen #
+###########
+
+@dataclass
+class StepInstance:
+    step_type_uuid: int = 0
+    assignments: Dict[Queriable, F] = field(default_factory=dict)
+
+    def new(step_type_uuid: int) -> StepInstance:
+        return StepInstance(step_type_uuid, {})
+    
+    def assign(self: StepInstance, lhs: Queriable, rhs: F):
+        self.assignments[lhs] = rhs
+
+Witness = List[StepInstance]
+
+@dataclass
+class TraceWitness:
+    step_instances: Witness = field(default_factory=list)
+    height: int = 0
+
+@dataclass
+class TraceContext:
+    witness: TraceWitness = TraceWitness()
+
+    def add(self: TraceContext, step: StepTypeWGHandler, args: Any):
+        witness = StepInstance.new(step.uuid)
+        step.wg(witness, args)
+        self.witness.step_instances.append(witness)
+
+    def set_height(self: TraceContext, height: int):
+        self.witness.height = height
+
+Trace = Callable[[TraceContext, Any], None] # Any instead of TraceArgs
+
+@dataclass
+class TraceGenerator:
+    trace: Trace
+
+    def generate(self: TraceGenerator, args: Any) -> TraceWitness: # Any instead of TraceArgs
+        ctx = TraceContext()
+        self.trace(ctx, args)
+        return ctx.witness
+    
+FixedAssigment = Dict[Queriable, List[F]]
+
+@dataclass
+class FixedGenContext:
+    assignments: FixedAssigment = field(default_factory=dict)
+    num_steps: int = 0
+
+    def new(num_steps: int) -> FixedGenContext:
+        return FixedGenContext({}, num_steps)
+    
+    def assign(self: FixedGenContext, offset: int, lhs: Queriable, rhs: F):
+        if not FixedGenContext.is_fixed_queriable(lhs):
+            raise ValueError(f"Cannot assign to non-fixed signal.")
+        if lhs in self.assignments.keys():
+            self.assignments[lhs][offset] = rhs
+        else:
+            self.assignments[lhs] = [F.zero()] * self.num_steps
+            self.assignments[lhs][offset] = rhs
+
+    def is_fixed_queriable(q: Queriable) -> bool:
+        match q.enum:
+            case Fixed(_, _): # Ignored Halo2FixedQuery enum type.
+                return True
+            case _:
+                return False
+            
