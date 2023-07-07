@@ -508,10 +508,7 @@ class TransitionConstraint:
     expr: Expr
 
     def __str__(self):
-        return (f"TransitionConstraint(\n"
-                f"\t\t\t\t\tannotation='{self.annotation}',\n"
-                f"\t\t\t\t\texpr={self.expr}\n"
-                f"\t\t\t\t)")
+        return (f"TransitionConstraint({self.annotation})")
 
 @dataclass
 class ForwardSignal:
@@ -624,7 +621,8 @@ class Expr:
                             else:
                                 result += " - "
                         case _:
-                            result += " + "
+                            if i > 0:
+                                result += " + "
                     result += str(expr)
                 result += ")"
                 return result
@@ -635,7 +633,7 @@ class Expr:
             case Pow(expr, pow):
                 return str(expr) + "^" + str(pow)
             case Query(queriable):
-                return str(queriable)
+                return queriable.annotation()
             case _:
                 raise ValueError("Invalid Expr enum type.")
              
