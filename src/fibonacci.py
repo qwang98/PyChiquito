@@ -1,7 +1,7 @@
 from __future__ import annotations
+import pprint
 
-from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext, StepTypeWGHandler, StepTypeHandler, Constraint
-from chiquito_ast import Queriable
+from pychiquito import CircuitContext, StepTypeContext, StepTypeSetupContext, StepTypeWGHandler, StepTypeHandler, Constraint, Queriable
 
 class Fibonacci(CircuitContext):
     def __init__(self: Fibonacci):
@@ -15,8 +15,8 @@ class Fibonacci(CircuitContext):
         self.pragma_first_step(fibo_step)
         self.pragma_last_step(fibo_last_step)
         
-        self.fibo_step: StepTypeWGHandler = FiboStep(self).wg() # `step_type_def`, which returns StepTypeWGHandler, is no longer needed.
-        self.fibo_last_step: StepTypeWGHandler = FiboLastStep(self).wg()
+        self.fibo_step: StepTypeWGHandler = self.step_type_def(FiboStep(self, fibo_step))
+        self.fibo_last_step: StepTypeWGHandler = self.step_type_def(FiboLastStep(self, fibo_last_step))
 
     def trace(self: Fibonacci):
         def trace_def(ctx: TraceContext, values: TraceArgs): # TODO: Complete wit_gen.py and update.
@@ -32,8 +32,8 @@ class Fibonacci(CircuitContext):
         super().trace(trace_def)
 
 class FiboStep(StepTypeContext):
-    def __init__(self: FiboStep, circuit: Fibonacci):
-        super().__init__()
+    def __init__(self: FiboStep, circuit: Fibonacci, handler: StepTypeHandler):
+        super().__init__(handler) # Pass the id and annotation of handler to a new StepTypeContext instance.
         c = self.internal("c")
 
         def setup_def(ctx: StepTypeSetupContext):
@@ -49,8 +49,8 @@ class FiboStep(StepTypeContext):
         return super().wg(wg_def)
         
 class FiboLastStep(StepTypeContext):
-    def __init__(self: FiboLastStep, circuit: Fibonacci):
-        super().__init__()
+    def __init__(self: FiboStep, circuit: Fibonacci, handler: StepTypeHandler):
+        super().__init__(handler)
         c = self.internal("c")
 
         def setup_def(ctx: StepTypeSetupContext):
@@ -64,4 +64,5 @@ class FiboLastStep(StepTypeContext):
         return super().wg(wg_def)   
 
 fibo = Fibonacci()
+# pprint.pprint(fibo.circuit)
 print(fibo.circuit) # Print ast::Circuit.
