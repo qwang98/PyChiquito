@@ -2,14 +2,13 @@ from __future__ import annotations
 import pprint
 from typing import Any, Tuple
 from py_ecc import bn128
-import PyChiquito # rust bindings
+# import PyChiquito # rust bindings
 
 from pychiquito import (
     CircuitContext,
     StepTypeContext,
     StepTypeSetupContext,
-    StepTypeWGHandler,
-    StepTypeHandler,
+    StepType,
     Constraint,
     Queriable,
     TraceContext,
@@ -28,38 +27,32 @@ class Fibonacci(CircuitContext):
         )  # `self.a` is required instead of `a`, because steps need to access `circuit.a`.
         self.b: Queriable = self.forward("b")
 
-        fibo_step: StepTypeHandler = self.step_type("fibo_step")
-        fibo_last_step: StepTypeHandler = self.step_type("fibo_last_step")
+        self.fibo_step: StepType = self.step_type("fibo_step")
+        self.fibo_last_step: StepType = self.step_type("fibo_last_step")
 
-        self.pragma_first_step(fibo_step)
-        self.pragma_last_step(fibo_last_step)
-
-        self.fibo_step: StepTypeWGHandler = self.step_type_def(
-            FiboStep(self, fibo_step)
-        )
-        self.fibo_last_step: StepTypeWGHandler = self.step_type_def(
-            FiboLastStep(self, fibo_last_step)
-        )
+        self.pragma_first_step(self.fibo_step)
+        self.pragma_last_step(self.fibo_last_step)
 
     def trace(self: Fibonacci):
         def trace_def(ctx: TraceContext, _: Any):  # Any instead of TraceArgs
-            ctx.add(self.fibo_step, (1, 1))
+            ctx.add(FiboStep(self, self.fibo_step), (1, 1))
+            print("add called")
             a = 1
             b = 2
             for i in range(1, 10):
-                ctx.add(self.fibo_step, (a, b))
+                ctx.add(FiboLastStep(self, self.fibo_last_step), (a, b))
                 prev_a = a
                 a = b
                 b += prev_a
-            ctx.add(self.fibo_last_step, (a, b))
+            ctx.add(FiboStep(self, self.fibo_last_step), (a, b))
 
         super().trace(trace_def)
 
 
 class FiboStep(StepTypeContext):
-    def __init__(self: FiboStep, circuit: Fibonacci, handler: StepTypeHandler):
+    def __init__(self: FiboStep, circuit: Fibonacci, step_type: StepType):
         super().__init__(
-            handler
+            step_type
         )  # Pass the id and annotation of handler to a new StepTypeContext instance.
         self.c = self.internal(
             "c"
@@ -72,7 +65,7 @@ class FiboStep(StepTypeContext):
 
         self.setup(setup_def)
 
-    def wg(self: FiboStep, circuit: Fibonacci) -> StepTypeWGHandler:
+    def wg(self: FiboStep, circuit: Fibonacci):
         def wg_def(ctx: StepInstance, values: Tuple[int, int]):  # Any instead of Args
             a_value, b_value = values
             print(f"fib step wg: {a_value}, {b_value}, {a_value + b_value}")
@@ -80,11 +73,11 @@ class FiboStep(StepTypeContext):
             ctx.assign(circuit.b, F(b_value))
             ctx.assign(self.c, F(a_value + b_value))
 
-        return super().wg(wg_def)
+        super().wg(wg_def)
 
 
 class FiboLastStep(StepTypeContext):
-    def __init__(self: FiboStep, circuit: Fibonacci, handler: StepTypeHandler):
+    def __init__(self: FiboStep, circuit: Fibonacci, handler: StepType):
         super().__init__(handler)
         self.c = self.internal("c")
 
@@ -93,7 +86,7 @@ class FiboLastStep(StepTypeContext):
 
         self.setup(setup_def)
 
-    def wg(self: FiboLastStep, circuit: Fibonacci) -> StepTypeWGHandler:
+    def wg(self: FiboLastStep, circuit: Fibonacci):
         def wg_def(ctx: StepInstance, values: Tuple[int, int]):  # Any instead of Args
             a_value, b_value = values
             print(f"fib last step wg: {a_value}, {b_value}, {a_value + b_value}\n")
@@ -101,18 +94,18 @@ class FiboLastStep(StepTypeContext):
             ctx.assign(circuit.b, F(b_value))
             ctx.assign(self.c, F(a_value + b_value))
 
-        return super().wg(wg_def)
+        super().wg(wg_def)
 
 
 fibo = Fibonacci()
 # pprint.pprint(fibo.circuit)
 fibo.trace()
-# print(fibo.circuit)  # Print ast::Circuit.
-PyChiquito.print_ast(fibo.circuit)
-PyChiquito.print_step_type(fibo.circuit.step_types)
+print(fibo.circuit)  # Print ast::Circuit.
+# PyChiquito.print_ast(fibo.circuit)
+# PyChiquito.print_step_type(fibo.circuit.step_type)
 
-# trace_generator = TraceGenerator(fibo.circuit.trace)
-# print(trace_generator.generate(None))  # Print TraceWitness
+trace_generator = TraceGenerator(fibo.circuit.trace)
+print(trace_generator.generate(None))  # Print TraceWitness
 
 # ast::Circuit output:
 
