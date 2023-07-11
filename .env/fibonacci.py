@@ -2,6 +2,7 @@ from __future__ import annotations
 import pprint
 from typing import Any, Tuple
 from py_ecc import bn128
+import PyChiquito # rust bindings
 
 from pychiquito import (
     CircuitContext,
@@ -105,10 +106,13 @@ class FiboLastStep(StepTypeContext):
 
 fibo = Fibonacci()
 # pprint.pprint(fibo.circuit)
-print(fibo.circuit)  # Print ast::Circuit.
 fibo.trace()
-trace_generator = TraceGenerator(fibo.circuit.trace)
-print(trace_generator.generate(None))  # Print TraceWitness
+# print(fibo.circuit)  # Print ast::Circuit.
+PyChiquito.print_ast(fibo.circuit)
+PyChiquito.print_step_type(fibo.circuit.step_types)
+
+# trace_generator = TraceGenerator(fibo.circuit.trace)
+# print(trace_generator.generate(None))  # Print TraceWitness
 
 # ast::Circuit output:
 

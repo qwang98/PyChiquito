@@ -2,3 +2,7 @@ zktypes.py
 test.py
 get-pip.py
 __pycache__
+bin
+lib
+include
+target/
