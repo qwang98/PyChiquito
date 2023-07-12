@@ -27,8 +27,8 @@ class Fibonacci(CircuitContext):
         )  # `self.a` is required instead of `a`, because steps need to access `circuit.a`.
         self.b: Queriable = self.forward("b")
 
-        self.fibo_step: StepType = self.step_type(FiboStep(self, "fibo_step"))
-        self.fibo_last_step: StepType = self.step_type(FiboLastStep(self, "fibo_last_step"))
+        self.fibo_step: StepTypeContext = self.step_type(FiboStep(self, "fibo_step"))
+        self.fibo_last_step: StepTypeContext = self.step_type(FiboLastStep(self, "fibo_last_step"))
 
         self.pragma_first_step(self.fibo_step)
         self.pragma_last_step(self.fibo_last_step)

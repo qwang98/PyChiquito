@@ -40,10 +40,9 @@ class CircuitContext:
 
     # TODO: Implement import_halo2_advice and import_halo2_fixed. Currently we ignore imported types.
 
-    def step_type(self: CircuitContext, step_type_context: StepTypeContext) -> StepType:
-        step_type: StepType = step_type_context.step_type
-        self.circuit.add_step_type(step_type, step_type.name)
-        return step_type
+    def step_type(self: CircuitContext, step_type_context: StepTypeContext) -> StepTypeContext:
+        self.circuit.add_step_type(step_type_context.step_type, step_type_context.step_type.name)
+        return step_type_context
     
     def step_type_def(self: StepTypeContext) -> StepTypeContext:
         self.circuit.add_step_type_def()
@@ -59,12 +58,12 @@ class CircuitContext:
         self.circuit.set_fixed_gen(fixed_gen_def)
 
     def pragma_first_step(
-        self: CircuitContext, step_type: StepType
+        self: CircuitContext, step_type_context: StepTypeContext
     ) -> None:  
-        self.circuit.first_step = step_type.id
+        self.circuit.first_step = step_type_context.step_type.id
 
-    def pragma_last_step(self, step_type: StepType) -> None:
-        self.circuit.last_step = step_type.id
+    def pragma_last_step(self, step_type_context: StepTypeContext) -> None:
+        self.circuit.last_step = step_type_context.step_type.id
 
     def pragma_num_steps(self, num_steps: int) -> None:
         self.circuit.num_steps = num_steps
