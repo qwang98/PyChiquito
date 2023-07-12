@@ -40,10 +40,13 @@ class CircuitContext:
 
     # TODO: Implement import_halo2_advice and import_halo2_fixed. Currently we ignore imported types.
 
-    def step_type(self: CircuitContext, name: str) -> StepType:
-        step = StepType.new(name)
-        self.circuit.add_step_type(step, name)
-        return step
+    def step_type(self: CircuitContext, step_type_context: StepTypeContext) -> StepType:
+        step_type: StepType = step_type_context.step_type
+        self.circuit.add_step_type(step_type, step_type.name)
+        return step_type
+    
+    def step_type_def(self: StepTypeContext) -> StepTypeContext:
+        self.circuit.add_step_type_def()
 
     def trace(
         self: CircuitContext, trace_def: Callable[[TraceContext, Any], None]
@@ -68,8 +71,8 @@ class CircuitContext:
 
 
 class StepTypeContext:
-    def __init__(self: StepTypeContext, step_type: StepType):
-        self.step_type = step_type
+    def __init__(self: StepTypeContext, step_type_name: str):
+        self.step_type = StepType.new(step_type_name)
 
     def internal(self: StepTypeContext, name: str) -> Internal:
         return Internal(self.step_type.add_signal(name))
@@ -79,11 +82,12 @@ class StepTypeContext:
     ) -> None:  # def is a keyword in python
         ctx = StepTypeSetupContext(self.step_type)
         setup_def(ctx)
+        print("setup called")
 
     def wg(
         self: StepTypeContext, wg_def: Callable[[TraceContext, Any], None]
     ):  # Any instead of Args
-        self.circuit.set_wg(wg_def)
+        self.step_type.set_wg(wg_def)
 
 @dataclass
 class StepTypeSetupContext:
@@ -426,10 +430,7 @@ class Circuit:
 
     def add_step_type(self: Circuit, step_type: StepType, name: str):
         self.annotations[step_type.id] = name
-
-    def add_step_type_def(self, step: StepType) -> int:
-        self.step_types[step.id] = step
-        return step.id
+        self.step_types[step_type.id] = step_type
 
     def set_trace(
         self: Circuit, trace_def: Callable[[TraceContext, Any], None]
@@ -534,9 +535,6 @@ class StepType:
     def set_wg(
         self, wg_def: Callable[[StepInstance, Any], None]
     ):  # Any instead of Args
-        if self.wg is not None:
-            raise Exception("Circuit cannot have more than one witness generator.")
-        else:
             self.wg = wg_def
 
     def next(self: StepType) -> StepTypeNext:
@@ -779,9 +777,10 @@ class Queriable(Expr):
     def __hash__(self: Queriable):
         return hash(self.uuid())
 
-@dataclass
+# Not defined as @dataclass, because inherited __hash__ will be set to None.
 class Internal(Queriable):
-    signal: InternalSignal
+    def __init__(self: Internal, signal: InternalSignal):
+        self.signal = signal
 
     def uuid(self: Internal) -> int:
         return self.signal.id
@@ -790,10 +789,10 @@ class Internal(Queriable):
         return self.signal.annotation
 
 
-@dataclass
 class Forward(Queriable):
-    signal: ForwardSignal
-    rotation: bool
+    def __init__(self: Forward, signal: ForwardSignal, rotation: bool):
+        self.signal = signal
+        self.rotation = rotation
 
     def next(self: Forward) -> Forward:
         if self.rotation:
@@ -811,10 +810,10 @@ class Forward(Queriable):
             return f"next({self.signal.annotation})"
 
 
-@dataclass
 class Shared(Queriable):
-    signal: SharedSignal
-    rotation: int
+    def __init__(self: Shared, signal: SharedSignal, rotation: int):
+        self.signal = signal
+        self.rotation = rotation
 
     def next(self: Shared) -> Shared:
         return Shared(self.signal, self.rotation + 1)
@@ -835,10 +834,10 @@ class Shared(Queriable):
             return f"{self.signal.annotation}(rot {self.rotation})"
 
 
-@dataclass
 class Fixed(Queriable):
-    signal: FixedSignal
-    rotation: int
+    def __init__(self: Fixed, signal: FixedSignal, rotation: int):
+        self.signal = signal
+        self.rotation = rotation
 
     def next(self: Fixed) -> Fixed:
         return Fixed(self.signal, self.rotation + 1)
@@ -859,9 +858,9 @@ class Fixed(Queriable):
             return f"{self.signal.annotation}(rot {self.rotation})"
 
 
-@dataclass
 class StepTypeNext(Queriable):
-    step_type: StepType
+    def __init__(self: StepTypeNext, step_type: StepType):
+        self.step_type = step_type
 
     def uuid(self: StepType) -> int:
         return self.id
@@ -941,7 +940,7 @@ class StepInstance:
         assignments_str = (
             "\n\t\t\t\t"
             + ",\n\t\t\t\t".join(
-                f"{lhs.annotation()} = {rhs}" for (lhs, rhs) in self.assignments.items()
+                f"{str(lhs)} = {rhs}" for (lhs, rhs) in self.assignments.items()
             )
             + "\n\t\t\t"
             if self.assignments
@@ -984,8 +983,9 @@ class TraceWitness:
 class TraceContext:
     witness: TraceWitness = field(default_factory=TraceWitness)
 
-    def add(self: TraceContext, step: StepTypeContext, args: Any): # StepTypeContext instead of StepTypeWGHandler, because StepTypeContext contains step type id and `wg` method that returns witness generation function
+    def add(self: TraceContext, circuit: CircuitContext, step: StepTypeContext, args: Any): # StepTypeContext instead of StepTypeWGHandler, because StepTypeContext contains step type id and `wg` method that returns witness generation function
         witness = StepInstance.new(step.step_type.id)
+        step.wg(circuit)
         if step.step_type.wg is None:
             raise ValueError(f"Step type {step.step_type.name} does not have a witness generator.")
         step.step_type.wg(witness, args)

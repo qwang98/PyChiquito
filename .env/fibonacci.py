@@ -27,32 +27,31 @@ class Fibonacci(CircuitContext):
         )  # `self.a` is required instead of `a`, because steps need to access `circuit.a`.
         self.b: Queriable = self.forward("b")
 
-        self.fibo_step: StepType = self.step_type("fibo_step")
-        self.fibo_last_step: StepType = self.step_type("fibo_last_step")
+        self.fibo_step: StepType = self.step_type(FiboStep(self, "fibo_step"))
+        self.fibo_last_step: StepType = self.step_type(FiboLastStep(self, "fibo_last_step"))
 
         self.pragma_first_step(self.fibo_step)
         self.pragma_last_step(self.fibo_last_step)
 
     def trace(self: Fibonacci):
         def trace_def(ctx: TraceContext, _: Any):  # Any instead of TraceArgs
-            ctx.add(FiboStep(self, self.fibo_step), (1, 1))
-            print("add called")
+            ctx.add(self, self.fibo_step, (1, 1))
             a = 1
             b = 2
             for i in range(1, 10):
-                ctx.add(FiboLastStep(self, self.fibo_last_step), (a, b))
+                ctx.add(self, self.fibo_step, (a, b))
                 prev_a = a
                 a = b
                 b += prev_a
-            ctx.add(FiboStep(self, self.fibo_last_step), (a, b))
+            ctx.add(self, self.fibo_last_step, (a, b))
 
         super().trace(trace_def)
 
 
 class FiboStep(StepTypeContext):
-    def __init__(self: FiboStep, circuit: Fibonacci, step_type: StepType):
+    def __init__(self: FiboStep, circuit: Fibonacci, step_type_name: str):
         super().__init__(
-            step_type
+            step_type_name
         )  # Pass the id and annotation of handler to a new StepTypeContext instance.
         self.c = self.internal(
             "c"
@@ -68,7 +67,7 @@ class FiboStep(StepTypeContext):
     def wg(self: FiboStep, circuit: Fibonacci):
         def wg_def(ctx: StepInstance, values: Tuple[int, int]):  # Any instead of Args
             a_value, b_value = values
-            print(f"fib step wg: {a_value}, {b_value}, {a_value + b_value}")
+            # print(f"fib step wg: {a_value}, {b_value}, {a_value + b_value}")
             ctx.assign(circuit.a, F(a_value))
             ctx.assign(circuit.b, F(b_value))
             ctx.assign(self.c, F(a_value + b_value))
@@ -77,8 +76,8 @@ class FiboStep(StepTypeContext):
 
 
 class FiboLastStep(StepTypeContext):
-    def __init__(self: FiboStep, circuit: Fibonacci, handler: StepType):
-        super().__init__(handler)
+    def __init__(self: FiboStep, circuit: Fibonacci, step_type: StepType):
+        super().__init__(step_type)
         self.c = self.internal("c")
 
         def setup_def(ctx: StepTypeSetupContext):
