@@ -1,3 +1,11 @@
+// RUST
+// folder frontend pychiquito in rust and the bindings there
+
+// PYTHON
+// in pychiquito have cargo toml to import the rust project (maybe also in a folder)
+//  source code: 1. sub module, 2. cargo (there's no cargo package for chiquito tho, but you can import using URL without crate)
+// subfolder in pychiquito, within which: 1. cargo.toml (import via url, or even just git clone)
+
 use std::{collections::HashMap, fmt::Debug};
 
 use pyo3::prelude::*;
