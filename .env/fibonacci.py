@@ -1,8 +1,9 @@
 from __future__ import annotations
-import pprint
+# import pprint
 from typing import Any, Tuple
 from py_ecc import bn128
-# import PyChiquito # rust bindings
+import rust_chiquito # rust bindings
+import json
 
 from pychiquito import (
     CircuitContext,
@@ -96,15 +97,31 @@ class FiboLastStep(StepTypeContext):
         super().wg(wg_def)
 
 
-fibo = Fibonacci()
-# pprint.pprint(fibo.circuit)
-fibo.trace()
-print(fibo.circuit)  # Print ast::Circuit.
-# PyChiquito.print_ast(fibo.circuit)
-# PyChiquito.print_step_type(fibo.circuit.step_type)
+# pychiquito boilerplate
+# fibo = Fibonacci()
+# # pprint.pprint(fibo.circuit)
+# fibo.trace()
+# print(fibo.circuit)  # Print ast::Circuit.
+# trace_generator = TraceGenerator(fibo.circuit.trace)
+# print(trace_generator.generate(None))  # Print TraceWitness
 
-trace_generator = TraceGenerator(fibo.circuit.trace)
-print(trace_generator.generate(None))  # Print TraceWitness
+# rust bindings boilerplate
+fibo = Fibonacci()
+fibo.trace()
+print("custom str method in python:")
+print(fibo.circuit) 
+print("default Debug print method for PyAny in rust:")
+rust_chiquito.print_ast(fibo.circuit)
+print("json in python:")
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, '__json__'):
+            return obj.__json__()
+        return super().default(obj)
+print(json.dumps(fibo.circuit, cls=CustomEncoder, indent=4))
+# print(fibo.circuit.__json__())
+# rust_chiquito.print_step_type(fibo.circuit.step_type)
+
 
 # ast::Circuit output:
 
