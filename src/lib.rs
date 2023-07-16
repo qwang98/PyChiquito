@@ -7,7 +7,21 @@
 // subfolder in pychiquito, within which: 1. cargo.toml (import via url, or even just git clone)
 pub mod ast;
 
+use chiquito::{
+    ast::{
+        expr::{query::Queriable as cQueriable, Expr as cExpr},
+        query, Circuit as cCircuit, Constraint as cConstraint, FixedSignal as cFixedSignal,
+        ForwardSignal as cForwardSignal, InternalSignal as cInternalSignal,
+        SharedSignal as cSharedSignal, StepType as cStepType,
+        TransitionConstraint as cTransitionConstraint,
+    },
+    dsl::{
+        cb::{Constraint as cbConstraint, Typing},
+        circuit, CircuitContext as cCircuitContext, StepTypeHandler as cStepTypeHandler,
+    },
+};
 use core::result::Result;
+use halo2_proofs::plonk::Fixed;
 use pyo3::prelude::*;
 use serde::de::{self, Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
 use serde_json::*;
@@ -15,7 +29,164 @@ use std::{
     collections::HashMap,
     fmt::{self, Debug},
     marker::PhantomData,
+    rc::Rc,
 };
+
+impl Expr<u32> {
+    fn to_chiquito_expr(
+        self: &Expr<u32>,
+        uuid_map: &HashMap<UUID, UUID>,
+        query_map: &HashMap<UUID, cQueriable<u32>>,
+    ) -> cExpr<u32> {
+        match self {
+            Expr::Const(p) => cExpr::Const(*p),
+            Expr::Sum(p) => cExpr::Sum(
+                p.into_iter()
+                    .map(|p| p.to_chiquito_expr(uuid_map, query_map))
+                    .collect(),
+            ),
+            Expr::Mul(p) => cExpr::Mul(
+                p.into_iter()
+                    .map(|p| p.to_chiquito_expr(uuid_map, query_map))
+                    .collect(),
+            ),
+            Expr::Neg(p) => cExpr::Neg(Box::new((*p).to_chiquito_expr(uuid_map, query_map))),
+            Expr::Pow(arg0, arg1) => cExpr::Pow(
+                Box::new((*arg0).to_chiquito_expr(uuid_map, query_map)),
+                *arg1,
+            ),
+            Expr::Query(p) => {
+                let r_id = uuid_map
+                    .get(&p.uuid())
+                    .expect("Exposed signal not found in uuid_map.");
+                let r = *query_map
+                    .get(r_id)
+                    .expect("Exposed signal not found in forward_query_map.");
+                cExpr::Query(r)
+            }
+        }
+    }
+}
+
+impl Circuit<u32> {
+    fn to_chiquito_ast<TraceArgs>(self: Circuit<u32>) -> cCircuit<u32, ()> {
+        let ast = circuit::<u32, (), (), _>("", |ctx| {
+            let mut uuid_map: HashMap<UUID, UUID> = HashMap::new(); // Python id to Rust id
+            let mut query_map: HashMap<UUID, cQueriable<u32>> = HashMap::new(); // Rust id to Rust Queriable
+            let mut step_type_handler_map: HashMap<UUID, cStepTypeHandler> = HashMap::new();
+
+            for p in self.forward_signals.iter() {
+                let r = ctx.forward_with_phase(p.annotation, p.phase);
+                uuid_map.insert(p.id, r.uuid());
+                query_map.insert(r.uuid(), r); // Queriable implements Copy.
+            }
+
+            for p in self.shared_signals.iter() {
+                let r = ctx.shared_with_phase(p.annotation, p.phase);
+                uuid_map.insert(p.id, r.uuid());
+                query_map.insert(r.uuid(), r);
+            }
+
+            for p in self.fixed_signals.iter() {
+                let r = ctx.fixed(p.annotation);
+                uuid_map.insert(p.id, r.uuid());
+                query_map.insert(r.uuid(), r);
+            }
+
+            for p in self.exposed.iter() {
+                let r_id = uuid_map
+                    .get(&p.id)
+                    .expect("Exposed signal not found in uuid_map.");
+                let r = *query_map
+                    .get(r_id)
+                    .expect("Exposed signal not found in forward_query_map.");
+                ctx.expose(r);
+            }
+
+            for (step_type_id, step_type) in self.step_types.clone() {
+                let handler = ctx.step_type(Box::leak(step_type.name.clone().into_boxed_str()));
+                uuid_map.insert(step_type_id, handler.uuid());
+                step_type_handler_map.insert(handler.uuid(), handler); // StepTypeHandler impl Copy trait.
+
+                ctx.step_type_def(handler, |ctx| {
+                    for p in step_type.signals.iter() {
+                        let r = ctx.internal(p.annotation);
+                        uuid_map.insert(p.id, r.uuid());
+                        query_map.insert(r.uuid(), r);
+                    }
+                    ctx.setup(|ctx| {
+                        for p in step_type.constraints.iter() {
+                            let constraint = cbConstraint {
+                                annotation: p.annotation.clone(),
+                                expr: p.expr.to_chiquito_expr(&uuid_map, &query_map),
+                                typing: Typing::AntiBooly,
+                            };
+                            ctx.constr(constraint);
+                        }
+                        for p in step_type.transition_constraints.iter() {
+                            let constraint = cbConstraint {
+                                annotation: p.annotation.clone(),
+                                expr: p.expr.to_chiquito_expr(&uuid_map, &query_map),
+                                typing: Typing::AntiBooly,
+                            };
+                            ctx.transition(constraint);
+                        }
+                    });
+
+                    ctx.wg(|_ctx, ()| {}) // Don't need wg for ast.
+                });
+
+                if let Some(p_id) = self.first_step {
+                    let r_id = uuid_map
+                        .get(&p_id)
+                        .expect("Step type not found in uuid_map.");
+                    let r = *step_type_handler_map
+                        .get(r_id)
+                        .expect("Step type not found in step_type_handler_map.");
+                    ctx.pragma_first_step(r);
+                }
+
+                if let Some(p_id) = self.last_step {
+                    let r_id = uuid_map
+                        .get(&p_id)
+                        .expect("Step type not found in uuid_map.");
+                    let r = *step_type_handler_map
+                        .get(r_id)
+                        .expect("Step type not found in step_type_handler_map.");
+                    ctx.pragma_last_step(r);
+                }
+
+                ctx.pragma_num_steps(self.num_steps);
+            }
+        });
+
+        ast
+    }
+}
+
+#[pyfunction]
+// fn simple_compile<F: Field + Hash, TraceArgs>(
+//     ast: &astCircuit<F, TraceArgs>
+// ) -> (Circuit<F>, Option<TraceGenerator<F, TraceArgs>>) {
+//     let compiler = Compiler::new(SingleRowCellManager {}, SimpleStepSelectorBuilder {});
+//     compiler.compile(ast)
+// }
+fn print_ast(ast: &PyAny) {
+    println!("{:?}", ast);
+}
+
+#[pyfunction]
+fn print_step_type(step_type: HashMap<u32, &PyAny>) {
+    println!("{:?}", step_type);
+}
+
+/// A Python module implemented in Rust.
+#[pymodule]
+fn rust_chiquito(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(print_ast, m)?)?;
+    m.add_function(wrap_pyfunction!(print_step_type, m)?)?;
+    Ok(())
+}
 
 #[derive(Clone)]
 pub enum Expr<F> {
@@ -129,6 +300,19 @@ impl<F> Queriable<F> {
             Queriable::_unaccessible(_) => todo!(),
         }
     }
+
+    pub fn uuid(&self) -> UUID {
+        match self {
+            Queriable::Internal(s) => s.uuid(),
+            Queriable::Forward(s, _) => s.uuid(),
+            Queriable::Shared(s, _) => s.uuid(),
+            Queriable::Fixed(s, _) => s.uuid(),
+            Queriable::StepTypeNext(s) => s.uuid(),
+            // Queriable::Halo2AdviceQuery(s, _) => s.uuid(),
+            // Queriable::Halo2FixedQuery(s, _) => s.uuid(),
+            _ => panic!("Invalid Queriable enum type."),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -138,11 +322,23 @@ pub struct ForwardSignal {
     annotation: &'static str,
 }
 
+impl ForwardSignal {
+    pub fn uuid(&self) -> UUID {
+        self.id
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct SharedSignal {
     id: UUID,
     phase: usize,
     annotation: &'static str,
+}
+
+impl SharedSignal {
+    pub fn uuid(&self) -> UUID {
+        self.id
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -151,10 +347,22 @@ pub struct FixedSignal {
     annotation: &'static str,
 }
 
+impl FixedSignal {
+    pub fn uuid(&self) -> UUID {
+        self.id
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct InternalSignal {
     id: UUID,
     annotation: &'static str,
+}
+
+impl InternalSignal {
+    pub fn uuid(&self) -> UUID {
+        self.id
+    }
 }
 
 pub type UUID = u128;
@@ -163,6 +371,12 @@ pub type UUID = u128;
 pub struct StepTypeHandler {
     id: StepTypeUUID,
     pub annotation: &'static str,
+}
+
+impl StepTypeHandler {
+    pub fn uuid(&self) -> UUID {
+        self.id
+    }
 }
 
 pub type StepTypeUUID = UUID;
@@ -179,9 +393,9 @@ pub struct TransitionConstraint<F> {
     pub expr: Expr<F>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StepType<F> {
-    id: StepTypeUUID,
+    pub id: StepTypeUUID,
 
     pub name: String,
     pub signals: Vec<InternalSignal>,
@@ -692,30 +906,6 @@ impl<'de> Visitor<'de> for CircuitVisitor {
     }
 }
 
-#[pyfunction]
-// fn simple_compile<F: Field + Hash, TraceArgs>(
-//     ast: &astCircuit<F, TraceArgs>
-// ) -> (Circuit<F>, Option<TraceGenerator<F, TraceArgs>>) {
-//     let compiler = Compiler::new(SingleRowCellManager {}, SimpleStepSelectorBuilder {});
-//     compiler.compile(ast)
-// }
-fn print_ast(ast: &PyAny) {
-    println!("{:?}", ast);
-}
-
-#[pyfunction]
-fn print_step_type(step_type: HashMap<u32, &PyAny>) {
-    println!("{:?}", step_type);
-}
-
-/// A Python module implemented in Rust.
-#[pymodule]
-fn rust_chiquito(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(print_ast, m)?)?;
-    m.add_function(wrap_pyfunction!(print_step_type, m)?)?;
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use halo2_proofs::{halo2curves::bn256::Fr, plonk::Fixed};
@@ -811,6 +1001,210 @@ mod tests {
     //     // println!("{}", serde_json::to_string(&expr).unwrap());
     //     println!("{:?}", query);
     // }
+    #[test]
+    fn test_python_circuit_json() {
+        use crate::Circuit;
+        let json = r#"
+        {
+            "step_types": {
+                "10": {
+                    "id": 10,
+                    "name": "fibo_step",
+                    "signals": [
+                        {
+                            "id": 11,
+                            "annotation": "c"
+                        }
+                    ],
+                    "constraints": [
+                        {
+                            "annotation": "((a + b) == c)",
+                            "expr": {
+                                "Sum": [
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 8,
+                                                "phase": 0,
+                                                "annotation": "a"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 9,
+                                                "phase": 0,
+                                                "annotation": "b"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Neg": {
+                                            "Internal": {
+                                                "id": 11,
+                                                "annotation": "c"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "transition_constraints": [
+                        {
+                            "annotation": "(b == next(a))",
+                            "expr": {
+                                "Sum": [
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 9,
+                                                "phase": 0,
+                                                "annotation": "b"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Neg": {
+                                            "Forward": [
+                                                {
+                                                    "id": 8,
+                                                    "phase": 0,
+                                                    "annotation": "a"
+                                                },
+                                                true
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "annotation": "(c == next(b))",
+                            "expr": {
+                                "Sum": [
+                                    {
+                                        "Internal": {
+                                            "id": 11,
+                                            "annotation": "c"
+                                        }
+                                    },
+                                    {
+                                        "Neg": {
+                                            "Forward": [
+                                                {
+                                                    "id": 9,
+                                                    "phase": 0,
+                                                    "annotation": "b"
+                                                },
+                                                true
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "annotations": {
+                        "11": "c"
+                    }
+                },
+                "12": {
+                    "id": 12,
+                    "name": "fibo_last_step",
+                    "signals": [
+                        {
+                            "id": 13,
+                            "annotation": "c"
+                        }
+                    ],
+                    "constraints": [
+                        {
+                            "annotation": "((a + b) == c)",
+                            "expr": {
+                                "Sum": [
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 8,
+                                                "phase": 0,
+                                                "annotation": "a"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 9,
+                                                "phase": 0,
+                                                "annotation": "b"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Neg": {
+                                            "Internal": {
+                                                "id": 13,
+                                                "annotation": "c"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "transition_constraints": [],
+                    "annotations": {
+                        "13": "c"
+                    }
+                }
+            },
+            "forward_signals": [
+                {
+                    "id": 8,
+                    "phase": 0,
+                    "annotation": "a"
+                },
+                {
+                    "id": 9,
+                    "phase": 0,
+                    "annotation": "b"
+                }
+            ],
+            "shared_signals": [],
+            "fixed_signals": [],
+            "exposed": [],
+            "annotations": {
+                "8": "a",
+                "9": "b",
+                "10": "fibo_step",
+                "12": "fibo_last_step"
+            },
+            "first_step": 10,
+            "last_step": null,
+            "num_steps": 0,
+            "id": 1
+        }
+        "#;
+        let circuit: Circuit<u32> = serde_json::from_str(json).unwrap();
+        // print!("{:?}", circuit);
+        println!("{:?}", circuit.to_chiquito_ast::<()>());
+    }
+
+    #[test]
+    fn test_python_steptype_json() {
+        use crate::StepType;
+        let json = r#"{"id": 1, "name": "fibo", "signals": [{"id": 1, "annotation": "a"}, {"id": 2, "annotation": "b"}], "constraints": [{"annotation": "constraint", "expr": {"Sum": [{"Const": 1}, {"Mul": [{"Internal": {"id": 3, "annotation": "c"}}, {"Const": 3}]}]}}, {"annotation": "constraint", "expr": {"Sum": [{"Const": 1}, {"Mul": [{"Shared": [{"id": 4, "phase": 2, "annotation": "d"}, 1]}, {"Const": 3}]}]}}], "transition_constraints": [{"annotation": "trans", "expr": {"Sum": [{"Const": 1}, {"Mul": [{"Forward": [{"id": 5, "phase": 1, "annotation": "e"}, true]}, {"Const": 3}]}]}}, {"annotation": "trans", "expr": {"Sum": [{"Const": 1}, {"Mul": [{"Fixed": [{"id": 6, "annotation": "e"}, 2]}, {"Const": 3}]}]}}], "annotations": {"5": "a", "6": "b", "7": "c"}}"#;
+        let step_type: StepType<u32> = serde_json::from_str(json).unwrap();
+        // println!("{}", serde_json::to_string(&expr).unwrap());
+        println!("{:?}", step_type);
+    }
 
     #[test]
     fn test_convert_same_type() {

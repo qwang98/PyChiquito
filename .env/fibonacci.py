@@ -2,7 +2,7 @@ from __future__ import annotations
 # import pprint
 from typing import Any, Tuple
 from py_ecc import bn128
-import rust_chiquito # rust bindings
+# import rust_chiquito # rust bindings
 import json
 
 from pychiquito import (
@@ -32,7 +32,7 @@ class Fibonacci(CircuitContext):
         self.fibo_last_step: StepTypeContext = self.step_type(FiboLastStep(self, "fibo_last_step"))
 
         self.pragma_first_step(self.fibo_step)
-        self.pragma_last_step(self.fibo_last_step)
+        # self.pragma_last_step(self.fibo_last_step)
 
     def trace(self: Fibonacci):
         def trace_def(ctx: TraceContext, _: Any):  # Any instead of TraceArgs
@@ -111,7 +111,7 @@ fibo.trace()
 print("custom str method in python:")
 print(fibo.circuit) 
 print("default Debug print method for PyAny in rust:")
-rust_chiquito.print_ast(fibo.circuit)
+# rust_chiquito.print_ast(fibo.circuit)
 print("json in python:")
 class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
