@@ -2,29 +2,22 @@ pub mod convert_to_chiquito;
 pub mod deserialize;
 pub mod deserialize_types;
 
-use pyo3::prelude::*;
-use std::collections::HashMap;
+use deserialize_types::ast::Circuit;
+use convert_to_chiquito::to_chiquito_ast;
+
+use pyo3::{prelude::*, types::PyString};
+use chiquito::ast::Circuit as cCircuit;
+
 
 #[pyfunction]
-// fn simple_compile<F: Field + Hash, TraceArgs>(
-//     ast: &astCircuit<F, TraceArgs>
-// ) -> (Circuit<F>, Option<TraceGenerator<F, TraceArgs>>) {
-//     let compiler = Compiler::new(SingleRowCellManager {}, SimpleStepSelectorBuilder {});
-//     compiler.compile(ast)
-// }
-fn print_ast(ast: &PyAny) {
-    println!("{:?}", ast);
+fn print_ast(json: &PyString) {
+    let deserialized_ast: Circuit<u32> = serde_json::from_str(json.to_str().expect("PyString convertion failed.")).expect("Json deserialization to Circuit failed.");
+    let chiquito_ast: cCircuit<u32, ()> = to_chiquito_ast::<()>(deserialized_ast);
+    println!("{:?}", chiquito_ast);
 }
 
-#[pyfunction]
-fn print_step_type(step_type: HashMap<u32, &PyAny>) {
-    println!("{:?}", step_type);
-}
-
-/// A Python module implemented in Rust.
 #[pymodule]
 fn rust_chiquito(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(print_ast, m)?)?;
-    m.add_function(wrap_pyfunction!(print_step_type, m)?)?;
     Ok(())
 }
