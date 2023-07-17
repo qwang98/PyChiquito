@@ -585,3 +585,500 @@ impl_deserialize!(StepTypeVisitor, StepType<u32>);
 impl_deserialize!(CircuitVisitor, Circuit<u32>);
 impl_deserialize!(TraceWitnessVisitor, TraceWitness<u32>);
 impl_deserialize!(StepInstanceVisitor, StepInstance<u32>);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_circuit() {
+        use crate::convert_to_chiquito::to_chiquito_ast;
+        let json = r#"
+        {
+            "step_types": {
+                "10": {
+                    "id": 10,
+                    "name": "fibo_step",
+                    "signals": [
+                        {
+                            "id": 11,
+                            "annotation": "c"
+                        }
+                    ],
+                    "constraints": [
+                        {
+                            "annotation": "((a + b) == c)",
+                            "expr": {
+                                "Sum": [
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 8,
+                                                "phase": 0,
+                                                "annotation": "a"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 9,
+                                                "phase": 0,
+                                                "annotation": "b"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Neg": {
+                                            "Internal": {
+                                                "id": 11,
+                                                "annotation": "c"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "transition_constraints": [
+                        {
+                            "annotation": "(b == next(a))",
+                            "expr": {
+                                "Sum": [
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 9,
+                                                "phase": 0,
+                                                "annotation": "b"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Neg": {
+                                            "Forward": [
+                                                {
+                                                    "id": 8,
+                                                    "phase": 0,
+                                                    "annotation": "a"
+                                                },
+                                                true
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "annotation": "(c == next(b))",
+                            "expr": {
+                                "Sum": [
+                                    {
+                                        "Internal": {
+                                            "id": 11,
+                                            "annotation": "c"
+                                        }
+                                    },
+                                    {
+                                        "Neg": {
+                                            "Forward": [
+                                                {
+                                                    "id": 9,
+                                                    "phase": 0,
+                                                    "annotation": "b"
+                                                },
+                                                true
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "annotations": {
+                        "11": "c"
+                    }
+                },
+                "12": {
+                    "id": 12,
+                    "name": "fibo_last_step",
+                    "signals": [
+                        {
+                            "id": 13,
+                            "annotation": "c"
+                        }
+                    ],
+                    "constraints": [
+                        {
+                            "annotation": "((a + b) == c)",
+                            "expr": {
+                                "Sum": [
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 8,
+                                                "phase": 0,
+                                                "annotation": "a"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Forward": [
+                                            {
+                                                "id": 9,
+                                                "phase": 0,
+                                                "annotation": "b"
+                                            },
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "Neg": {
+                                            "Internal": {
+                                                "id": 13,
+                                                "annotation": "c"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "transition_constraints": [],
+                    "annotations": {
+                        "13": "c"
+                    }
+                }
+            },
+            "forward_signals": [
+                {
+                    "id": 8,
+                    "phase": 0,
+                    "annotation": "a"
+                },
+                {
+                    "id": 9,
+                    "phase": 0,
+                    "annotation": "b"
+                }
+            ],
+            "shared_signals": [],
+            "fixed_signals": [],
+            "exposed": [],
+            "annotations": {
+                "8": "a",
+                "9": "b",
+                "10": "fibo_step",
+                "12": "fibo_last_step"
+            },
+            "first_step": 10,
+            "last_step": null,
+            "num_steps": 0,
+            "id": 1
+        }
+        "#;
+        let circuit: Circuit<u32> = serde_json::from_str(json).unwrap();
+        // print!("{:?}", circuit);
+        println!("{:?}", to_chiquito_ast::<()>(circuit));
+    }
+
+    #[test]
+    fn test_step_type() {
+        let json = r#"
+        {
+            "id":1,
+            "name":"fibo",
+            "signals":[
+                {
+                    "id":1,
+                    "annotation":"a"
+                },
+                {
+                    "id":2,
+                    "annotation":"b"
+                }
+            ],
+            "constraints":[
+                {
+                    "annotation":"constraint",
+                    "expr":{
+                        "Sum":[
+                            {
+                                "Const":1
+                            },
+                            {
+                                "Mul":[
+                                    {
+                                        "Internal":{
+                                            "id":3,
+                                            "annotation":"c"
+                                        }
+                                    },
+                                    {
+                                        "Const":3
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "annotation":"constraint",
+                    "expr":{
+                        "Sum":[
+                            {
+                                "Const":1
+                            },
+                            {
+                                "Mul":[
+                                    {
+                                        "Shared":[
+                                            {
+                                                "id":4,
+                                                "phase":2,
+                                                "annotation":"d"
+                                            },
+                                            1
+                                        ]
+                                    },
+                                    {
+                                        "Const":3
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "transition_constraints":[
+                {
+                    "annotation":"trans",
+                    "expr":{
+                        "Sum":[
+                            {
+                                "Const":1
+                            },
+                            {
+                                "Mul":[
+                                    {
+                                        "Forward":[
+                                            {
+                                                "id":5,
+                                                "phase":1,
+                                                "annotation":"e"
+                                            },
+                                            true
+                                        ]
+                                    },
+                                    {
+                                        "Const":3
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "annotation":"trans",
+                    "expr":{
+                        "Sum":[
+                            {
+                                "Const":1
+                            },
+                            {
+                                "Mul":[
+                                    {
+                                        "Fixed":[
+                                            {
+                                                "id":6,
+                                                "annotation":"e"
+                                            },
+                                            2
+                                        ]
+                                    },
+                                    {
+                                        "Const":3
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "annotations":{
+                "5":"a",
+                "6":"b",
+                "7":"c"
+            }
+        }
+        "#;
+        let step_type: StepType<u32> = serde_json::from_str(json).unwrap();
+        // print!("{:?}", step_type);
+        println!("{:?}", step_type);
+    }
+
+    #[test]
+    fn test_constraint() {
+        let json = r#"
+        {"annotation": "constraint",
+        "expr": 
+        {
+            "Sum": [
+                {
+                "Internal": {
+                    "id": 27,
+                    "annotation": "a"
+                }
+                },
+                {
+                "Fixed": [
+                    {
+                        "id": 28,
+                        "annotation": "b"
+                    },
+                    1
+                ]
+                },
+                {
+                "Shared": [
+                    {
+                        "id": 29,
+                        "phase": 1,
+                        "annotation": "c"
+                    },
+                    2
+                ]
+                },
+                {
+                "Forward": [
+                    {
+                        "id": 30,
+                        "phase": 2,
+                        "annotation": "d"
+                    },
+                    true
+                ]
+                },
+                {
+                "StepTypeNext": {
+                    "id": 31,
+                    "annotation": "e"
+                }
+                },
+                {
+                "Const": 3
+                },
+                {
+                "Mul": [
+                    {
+                    "Const": 4
+                    },
+                    {
+                    "Const": 5
+                    }
+                ]
+                },
+                {
+                "Neg": {
+                    "Const": 2
+                }
+                },
+                {
+                "Pow": [
+                    {
+                    "Const": 3
+                    },
+                    4
+                ]
+                }
+            ]
+            }
+        }"#;
+        let constraint: Constraint<u32> = serde_json::from_str(json).unwrap();
+        println!("{:?}", constraint);
+        let transition_constraint: TransitionConstraint<u32> = serde_json::from_str(json).unwrap();
+        println!("{:?}", transition_constraint);
+    }
+
+    #[test]
+    fn test_expr() {
+        let json = r#"
+        {
+            "Sum": [
+                {
+                "Internal": {
+                    "id": 27,
+                    "annotation": "a"
+                }
+                },
+                {
+                "Fixed": [
+                    {
+                        "id": 28,
+                        "annotation": "b"
+                    },
+                    1
+                ]
+                },
+                {
+                "Shared": [
+                    {
+                        "id": 29,
+                        "phase": 1,
+                        "annotation": "c"
+                    },
+                    2
+                ]
+                },
+                {
+                "Forward": [
+                    {
+                        "id": 30,
+                        "phase": 2,
+                        "annotation": "d"
+                    },
+                    true
+                ]
+                },
+                {
+                "StepTypeNext": {
+                    "id": 31,
+                    "annotation": "e"
+                }
+                },
+                {
+                "Const": 3
+                },
+                {
+                "Mul": [
+                    {
+                    "Const": 4
+                    },
+                    {
+                    "Const": 5
+                    }
+                ]
+                },
+                {
+                "Neg": {
+                    "Const": 2
+                }
+                },
+                {
+                "Pow": [
+                    {
+                    "Const": 3
+                    },
+                    4
+                ]
+                }
+            ]
+            }"#;
+        let expr: Expr<u32> = serde_json::from_str(json).unwrap();
+        // println!("{}", serde_json::to_string(&expr).unwrap());
+        println!("{:?}", expr);
+    }
+}
