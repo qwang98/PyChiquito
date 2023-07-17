@@ -2,7 +2,13 @@ zktypes.py
 test.py
 get-pip.py
 __pycache__/
-bin/
 lib/
 include/
 target/
+maturin
+python
+python3
+python3.11
+pip
+pip3
+pip3.11
