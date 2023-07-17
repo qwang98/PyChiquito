@@ -4,6 +4,14 @@
 - Python functions for creating WG object and FG in PyChiquito
   - Status: DONE and debugged WG with Fibo example. FG not debugged yet.
 - Convert Rust module to Python library using PyO3 and Maturin
-  - Status: research done, soon to start implementation
+  - Status: DONE for AST.
+- Design Json serialization standard in Python.
+  - Status: DONE for AST and TraceWitness.
+- Implement Json deserialization with Serde in Rust.
+  - Status: DONE for AST and TraceWitness.
 - Call Chiquito rust functions from Python with AST and WG object in Python
-  - Status: not started
+  - Status: DONE for AST and TraceWitness.
+- Convert TraceWitness to assignment in Rust.
+  - Status: Still researching due to the complexity of `AssignmentGenerator`.
+- Create Rust bindings for generating and verifiying proof, using Halo2 boilerplate.
+  - Status: Not started.
