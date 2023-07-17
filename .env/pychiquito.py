@@ -9,6 +9,10 @@ from util import uuid
 
 F = bn128.FQ
 
+# Monkey patching for __json__ method that doesn't exist in F.
+# Returns the n: int field of super class FQ.
+F.__json__ = lambda self: self.n
+
 #######
 # dsl #
 #######
@@ -832,6 +836,10 @@ class Queriable(Expr):
     # __hash__ method is required, because Queriable is used as a key in the assignment dictionary.
     def __hash__(self: Queriable):
         return hash(self.uuid())
+    
+    # Implemented in all children classes, and only children instances will ever be created for Queriable.
+    def uuid(self: Queriable) -> int:
+        pass
 
 # Not defined as @dataclass, because inherited __hash__ will be set to None.
 class Internal(Queriable):
@@ -1009,7 +1017,7 @@ class StepInstance:
     def assign(self: StepInstance, lhs: Queriable, rhs: F):
         self.assignments[lhs] = rhs
 
-    def __str__(self):
+    def __str__(self: StepInstance):
         assignments_str = (
             "\n\t\t\t\t"
             + ",\n\t\t\t\t".join(
@@ -1025,6 +1033,10 @@ class StepInstance:
             f"\t\t\tassignments={{{assignments_str}}},\n"
             f"\t\t)"
         )
+    
+    # For assignments, return "uuid: F" rather than "Queriable: F", because JSON doesn't accept Dict as key.
+    def __json__(self: StepInstance):
+        return {"step_type_uuid": self.step_type_uuid, "assignments": {lhs.uuid(): rhs for (lhs, rhs) in self.assignments.items()}}
 
 
 Witness = List[StepInstance]
@@ -1034,7 +1046,7 @@ class TraceWitness:
     step_instances: Witness = field(default_factory=list)
     height: int = 0
 
-    def __str__(self):
+    def __str__(self: TraceWitness):
         step_instances_str = (
             "\n\t\t"
             + ",\n\t\t".join(
@@ -1051,6 +1063,8 @@ class TraceWitness:
             f")"
         )
 
+    def __json__(self: TraceWitness): 
+        return {"step_instances": [step_instance.__json__() for step_instance in self.step_instances], "height": self.height}
 
 @dataclass
 class TraceContext:
@@ -1110,9 +1124,9 @@ class FixedGenContext:
             case _:
                 return False
 
-####
-# test
-####
+########
+# test #
+########
 # print(Internal(InternalSignal("a")).__json__())
 # print(Forward(ForwardSignal(1, "a"), True).__json__())
 # print(Shared(SharedSignal(0, "a"), 2).__json__())

@@ -122,6 +122,12 @@ print(json.dumps(fibo.circuit, cls=CustomEncoder, indent=4))
 # print(fibo.circuit.__json__())
 # rust_chiquito.print_step_type(fibo.circuit.step_type)
 
+trace_generator = TraceGenerator(fibo.circuit.trace)
+trace_witness = trace_generator.generate(None)
+print("custom str method in python:")
+print(trace_witness)  
+print("json in python:")
+print(json.dumps(trace_witness, cls=CustomEncoder, indent=4))
 
 # ast::Circuit output:
 
