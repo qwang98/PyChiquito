@@ -1,10 +1,3 @@
-pub mod convert_to_chiquito;
-pub mod deserialize;
-pub mod deserialize_types;
-
-use deserialize_types::ast::Circuit;
-use convert_to_chiquito::to_chiquito_ast;
-
 use pyo3::{prelude::*, types::PyString};
 use chiquito::ast::Circuit as cCircuit;
 
