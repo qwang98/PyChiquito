@@ -45,10 +45,14 @@ class CircuitContext:
 
     # TODO: Implement import_halo2_advice and import_halo2_fixed. Currently we ignore imported types.
 
-    def step_type(self: CircuitContext, step_type_context: StepTypeContext) -> StepTypeContext:
-        self.circuit.add_step_type(step_type_context.step_type, step_type_context.step_type.name)
+    def step_type(
+        self: CircuitContext, step_type_context: StepTypeContext
+    ) -> StepTypeContext:
+        self.circuit.add_step_type(
+            step_type_context.step_type, step_type_context.step_type.name
+        )
         return step_type_context
-    
+
     def step_type_def(self: StepTypeContext) -> StepTypeContext:
         self.circuit.add_step_type_def()
 
@@ -64,7 +68,7 @@ class CircuitContext:
 
     def pragma_first_step(
         self: CircuitContext, step_type_context: StepTypeContext
-    ) -> None:  
+    ) -> None:
         self.circuit.first_step = step_type_context.step_type.id
 
     def pragma_last_step(self, step_type_context: StepTypeContext) -> None:
@@ -93,6 +97,7 @@ class StepTypeContext:
     ):  # Any instead of Args
         self.step_type.set_wg(wg_def)
 
+
 @dataclass
 class StepTypeSetupContext:
     step_type: StepType
@@ -114,7 +119,6 @@ class StepTypeSetupContext:
             )
 
     # TODO: Implement add_lookup after lookup abstraction PR is merged.
-
 
 
 def circuit(
@@ -278,9 +282,7 @@ class Constraint:
             f"0 == {constraint.annotation}", constraint.expr, Typing.AntiBooly
         )
 
-    def if_next_step(
-        step_type: StepType, constraint: ToConstraint
-    ) -> Constraint: 
+    def if_next_step(step_type: StepType, constraint: ToConstraint) -> Constraint:
         constraint = to_constraint(constraint)
         return Constraint(
             f"if(next step is {step_type.annotation})then({constraint.annotation})",
@@ -411,7 +413,7 @@ class Circuit:
             f"\tnum_steps={self.num_steps}\n"
             f")"
         )
-    
+
     def __json__(self: Circuit):
         return {
             "step_types": {k: v.__json__() for k, v in self.step_types.items()},
@@ -423,7 +425,7 @@ class Circuit:
             "first_step": self.first_step,
             "last_step": self.last_step,
             "num_steps": self.num_steps,
-            "id": self.id
+            "id": self.id,
         }
 
     def add_forward(self: Circuit, name: str, phase: int) -> ForwardSignal:
@@ -483,6 +485,7 @@ class Circuit:
 #     pub annotations: HashMap<u32, String>,
 # }
 
+
 @dataclass
 class StepType:
     id: int
@@ -491,7 +494,9 @@ class StepType:
     constraints: List[ASTConstraint]
     transition_constraints: List[TransitionConstraint]
     annotations: Dict[int, str]
-    wg: Optional[Callable[[StepInstance, Any], None]] # Any instead of Args. Not passed to Rust Chiquito.
+    wg: Optional[
+        Callable[[StepInstance, Any], None]
+    ]  # Any instead of Args. Not passed to Rust Chiquito.
 
     def new(name: str) -> StepType:
         return StepType(uuid(), name, [], [], [], {}, None)
@@ -536,15 +541,17 @@ class StepType:
             f"\t\t\tannotations={{{annotations_str}}}\n"
             f"\t\t)"
         )
-    
+
     def __json__(self):
         return {
             "id": self.id,
             "name": self.name,
             "signals": [x.__json__() for x in self.signals],
             "constraints": [x.__json__() for x in self.constraints],
-            "transition_constraints": [x.__json__() for x in self.transition_constraints],
-            "annotations": self.annotations
+            "transition_constraints": [
+                x.__json__() for x in self.transition_constraints
+            ],
+            "annotations": self.annotations,
         }
 
     def add_signal(self: StepType, name: str) -> InternalSignal:
@@ -564,7 +571,7 @@ class StepType:
     def set_wg(
         self, wg_def: Callable[[StepInstance, Any], None]
     ):  # Any instead of Args
-            self.wg = wg_def
+        self.wg = wg_def
 
     def next(self: StepType) -> StepTypeNext:
         return StepTypeNext(self)
@@ -593,7 +600,7 @@ class ASTConstraint:
             f"\t\t\t\t\texpr={self.expr}\n"
             f"\t\t\t\t)"
         )
-    
+
     def __json__(self: ASTConstraint):
         return {"annotation": self.annotation, "expr": self.expr.__json__()}
 
@@ -605,7 +612,7 @@ class TransitionConstraint:
 
     def __str__(self: TransitionConstraint):
         return f"TransitionConstraint({self.annotation})"
-    
+
     def __json__(self: TransitionConstraint):
         return {"annotation": self.annotation, "expr": self.expr.__json__()}
 
@@ -627,6 +634,7 @@ class ForwardSignal:
     def __json__(self: ForwardSignal):
         return asdict(self)
 
+
 @dataclass
 class SharedSignal:
     id: int
@@ -644,6 +652,7 @@ class SharedSignal:
     def __json__(self: SharedSignal):
         return asdict(self)
 
+
 @dataclass
 class FixedSignal:
     id: int
@@ -659,6 +668,7 @@ class FixedSignal:
     def __json__(self: FixedSignal):
         return asdict(self)
 
+
 @dataclass
 class InternalSignal:
     id: int
@@ -670,7 +680,7 @@ class InternalSignal:
 
     def __str__(self: InternalSignal):
         return f"InternalSignal(id={self.id}, annotation='{self.annotation}')"
-    
+
     def __json__(self: InternalSignal):
         return asdict(self)
 
@@ -692,7 +702,6 @@ class InternalSignal:
 
 @dataclass
 class Expr:
-
     def __neg__(self: Expr) -> Neg:
         return Neg(self)
 
@@ -702,14 +711,14 @@ class Expr:
 
     def __radd__(self: Expr, lhs: ToExpr) -> Sum:
         return Expr.__add__(lhs, self)
-    
+
     def __sub__(self: Expr, rhs: ToExpr) -> Sum:
         rhs = to_expr(rhs)
         return Sum([self, Neg(rhs)])
 
     def __rsub__(self: Expr, lhs: ToExpr) -> Sum:
         return Expr.__sub__(lhs, self)
-    
+
     def __mul__(self: Expr, rhs: ToExpr) -> Mul:
         rhs = to_expr(rhs)
         return Mul([self, rhs])
@@ -727,10 +736,10 @@ class Const(Expr):
 
     def __str__(self: Const) -> str:
         return str(self.value)
-    
+
     def __json__(self):
         return {"Const": self.value}
-    
+
 
 @dataclass
 class Sum(Expr):
@@ -750,24 +759,23 @@ class Sum(Expr):
             result += str(expr)
         result += ")"
         return result
-    
+
     def __json__(self):
         return {"Sum": [expr.__json__() for expr in self.exprs]}
-    
+
     def __add__(self: Sum, rhs: ToExpr) -> Sum:
         rhs = to_expr(rhs)
         return Sum(self.exprs + [rhs])
-    
+
     def __radd__(self: Sum, lhs: ToExpr) -> Sum:
         return Sum.__add__(lhs, self)
-    
+
     def __sub__(self: Sum, rhs: ToExpr) -> Sum:
         rhs = to_expr(rhs)
         return Sum(self.exprs + [Neg(rhs)])
-    
+
     def __rsub__(self: Sum, lhs: ToExpr) -> Sum:
         return Sum.__sub__(lhs, self)
-
 
 
 @dataclass
@@ -776,14 +784,14 @@ class Mul(Expr):
 
     def __str__(self: Mul) -> str:
         return "*".join([str(expr) for expr in self.exprs])
-    
+
     def __json__(self):
         return {"Mul": [expr.__json__() for expr in self.exprs]}
-    
+
     def __mul__(self: Mul, rhs: ToExpr) -> Mul:
         rhs = to_expr(rhs)
         return Mul(self.exprs + [rhs])
-    
+
     def __rmul__(self: Mul, lhs: ToExpr) -> Mul:
         return Mul.__mul__(lhs, self)
 
@@ -794,12 +802,13 @@ class Neg(Expr):
 
     def __str__(self: Neg) -> str:
         return "(-" + str(self.expr) + ")"
-    
+
     def __json__(self):
         return {"Neg": self.expr.__json__()}
 
     def __neg__(self: Neg) -> Expr:
         return self.expr
+
 
 @dataclass
 class Pow(Expr):
@@ -807,7 +816,7 @@ class Pow(Expr):
     pow: int
 
     def __str__(self: Pow) -> str:
-        return str(self.expr) + "^" + str(self.pow)   
+        return str(self.expr) + "^" + str(self.pow)
 
     def __json__(self):
         return {"Pow": [self.expr.__json__(), self.pow]}
@@ -831,15 +840,16 @@ class Pow(Expr):
 #     _unaccessible(PhantomData<F>),
 # }
 
-class Queriable(Expr):
 
+class Queriable(Expr):
     # __hash__ method is required, because Queriable is used as a key in the assignment dictionary.
     def __hash__(self: Queriable):
         return hash(self.uuid())
-    
+
     # Implemented in all children classes, and only children instances will ever be created for Queriable.
     def uuid(self: Queriable) -> int:
         pass
+
 
 # Not defined as @dataclass, because inherited __hash__ will be set to None.
 class Internal(Queriable):
@@ -851,7 +861,7 @@ class Internal(Queriable):
 
     def __str__(self: Internal) -> str:
         return self.signal.annotation
-    
+
     def __json__(self):
         return {"Internal": self.signal.__json__()}
 
@@ -866,19 +876,18 @@ class Forward(Queriable):
             raise ValueError("Cannot rotate Forward twice.")
         else:
             return Forward(self.signal, True)
-        
+
     def uuid(self: Forward) -> int:
         return self.signal.id
-    
+
     def __str__(self: Forward) -> str:
         if not self.rotation:
             return self.signal.annotation
         else:
             return f"next({self.signal.annotation})"
-    
+
     def __json__(self):
         return {"Forward": [self.signal.__json__(), self.rotation]}
-
 
 
 class Shared(Queriable):
@@ -888,16 +897,16 @@ class Shared(Queriable):
 
     def next(self: Shared) -> Shared:
         return Shared(self.signal, self.rotation + 1)
-    
+
     def prev(self: Shared) -> Shared:
         return Shared(self.signal, self.rotation - 1)
-    
+
     def rot(self: Shared, rotation: int) -> Shared:
         return Shared(self.signal, self.rotation + rotation)
-    
+
     def uuid(self: Shared) -> int:
         return self.signal.id
-    
+
     def __str__(self: Shared) -> str:
         if self.rotation == 0:
             return self.signal.annotation
@@ -908,7 +917,6 @@ class Shared(Queriable):
         return {"Shared": [self.signal.__json__(), self.rotation]}
 
 
-
 class Fixed(Queriable):
     def __init__(self: Fixed, signal: FixedSignal, rotation: int):
         self.signal = signal
@@ -916,16 +924,16 @@ class Fixed(Queriable):
 
     def next(self: Fixed) -> Fixed:
         return Fixed(self.signal, self.rotation + 1)
-    
+
     def prev(self: Fixed) -> Fixed:
         return Fixed(self.signal, self.rotation - 1)
-    
+
     def rot(self: Fixed, rotation: int) -> Fixed:
-        return Fixed(self.signal, self.rotation + rotation) 
-    
+        return Fixed(self.signal, self.rotation + rotation)
+
     def uuid(self: Fixed) -> int:
         return self.signal.id
-    
+
     def __str__(self: Fixed) -> str:
         if self.rotation == 0:
             return self.signal.annotation
@@ -942,12 +950,15 @@ class StepTypeNext(Queriable):
 
     def uuid(self: StepType) -> int:
         return self.id
-    
+
     def __str__(self: StepType) -> str:
         return self.name
-    
+
     def __json__(self):
-        return {"StepTypeNext": {"id": self.step_type.id, "annotation": self.step_type.name}}
+        return {
+            "StepTypeNext": {"id": self.step_type.id, "annotation": self.step_type.name}
+        }
+
 
 # Ignored Queriable::Halo2AdviceQuery and Queriable::Halo2FixedQuery
 
@@ -1033,13 +1044,17 @@ class StepInstance:
             f"\t\t\tassignments={{{assignments_str}}},\n"
             f"\t\t)"
         )
-    
+
     # For assignments, return "uuid: F" rather than "Queriable: F", because JSON doesn't accept Dict as key.
     def __json__(self: StepInstance):
-        return {"step_type_uuid": self.step_type_uuid, "assignments": {lhs.uuid(): rhs for (lhs, rhs) in self.assignments.items()}}
+        return {
+            "step_type_uuid": self.step_type_uuid,
+            "assignments": {lhs.uuid(): rhs for (lhs, rhs) in self.assignments.items()},
+        }
 
 
 Witness = List[StepInstance]
+
 
 @dataclass
 class TraceWitness:
@@ -1063,18 +1078,28 @@ class TraceWitness:
             f")"
         )
 
-    def __json__(self: TraceWitness): 
-        return {"step_instances": [step_instance.__json__() for step_instance in self.step_instances], "height": self.height}
+    def __json__(self: TraceWitness):
+        return {
+            "step_instances": [
+                step_instance.__json__() for step_instance in self.step_instances
+            ],
+            "height": self.height,
+        }
+
 
 @dataclass
 class TraceContext:
     witness: TraceWitness = field(default_factory=TraceWitness)
 
-    def add(self: TraceContext, circuit: CircuitContext, step: StepTypeContext, args: Any): # StepTypeContext instead of StepTypeWGHandler, because StepTypeContext contains step type id and `wg` method that returns witness generation function
+    def add(
+        self: TraceContext, circuit: CircuitContext, step: StepTypeContext, args: Any
+    ):  # StepTypeContext instead of StepTypeWGHandler, because StepTypeContext contains step type id and `wg` method that returns witness generation function
         witness = StepInstance.new(step.step_type.id)
         step.wg(circuit)
         if step.step_type.wg is None:
-            raise ValueError(f"Step type {step.step_type.name} does not have a witness generator.")
+            raise ValueError(
+                f"Step type {step.step_type.name} does not have a witness generator."
+            )
         step.step_type.wg(witness, args)
         self.witness.step_instances.append(witness)
 
@@ -1124,6 +1149,7 @@ class FixedGenContext:
             case _:
                 return False
 
+
 ########
 # test #
 ########
@@ -1134,25 +1160,34 @@ class FixedGenContext:
 # print(StepTypeNext(StepType.new("fibo")).__json__())
 # print(ASTConstraint("constraint", Sum([Const(1), Mul([Internal(InternalSignal("a")), Const(3)])])).__json__())
 # print(TransitionConstraint("trans", Sum([Const(1), Mul([Internal(InternalSignal("a")), Const(3)])])).__json__())
-print(StepType(
-    1, 
-    "fibo", 
-    [InternalSignal("a"), InternalSignal("b")], 
-    [
-        ASTConstraint("constraint", Sum([Const(1), Mul([Internal(InternalSignal("c")), Const(3)])])),
-        ASTConstraint("constraint", Sum([Const(1), Mul([Shared(SharedSignal(2, "d"), 1), Const(3)])]))
-    ], 
-    [
-        TransitionConstraint("trans", Sum([Const(1), Mul([Forward(ForwardSignal(1, "e"), True), Const(3)])])),
-        TransitionConstraint("trans", Sum([Const(1), Mul([Fixed(FixedSignal("e"), 2), Const(3)])]))
-    ],
-    {
-        5: "a",
-        6: "b",
-        7: "c"
-    },
-    None
-).__json__())
+print(
+    StepType(
+        1,
+        "fibo",
+        [InternalSignal("a"), InternalSignal("b")],
+        [
+            ASTConstraint(
+                "constraint",
+                Sum([Const(1), Mul([Internal(InternalSignal("c")), Const(3)])]),
+            ),
+            ASTConstraint(
+                "constraint",
+                Sum([Const(1), Mul([Shared(SharedSignal(2, "d"), 1), Const(3)])]),
+            ),
+        ],
+        [
+            TransitionConstraint(
+                "trans",
+                Sum([Const(1), Mul([Forward(ForwardSignal(1, "e"), True), Const(3)])]),
+            ),
+            TransitionConstraint(
+                "trans", Sum([Const(1), Mul([Fixed(FixedSignal("e"), 2), Const(3)])])
+            ),
+        ],
+        {5: "a", 6: "b", 7: "c"},
+        None,
+    ).__json__()
+)
 
 # class StepType:
 #     id: int

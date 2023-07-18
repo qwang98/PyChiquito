@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Tuple
 from py_ecc import bn128
 import json
-import rust_chiquito # rust bindings
+import rust_chiquito  # rust bindings
 
 from pychiquito import (
     CircuitContext,
@@ -28,7 +28,9 @@ class Fibonacci(CircuitContext):
         self.b: Queriable = self.forward("b")
 
         self.fibo_step: StepTypeContext = self.step_type(FiboStep(self, "fibo_step"))
-        self.fibo_last_step: StepTypeContext = self.step_type(FiboLastStep(self, "fibo_last_step"))
+        self.fibo_last_step: StepTypeContext = self.step_type(
+            FiboLastStep(self, "fibo_last_step")
+        )
 
         self.pragma_first_step(self.fibo_step)
         # self.pragma_last_step(self.fibo_last_step)
@@ -95,17 +97,22 @@ class FiboLastStep(StepTypeContext):
 
         super().wg(wg_def)
 
+
 # Print Circuit
 fibo = Fibonacci()
 fibo.trace()
 print("Print Circuit using custom __str__ method in python:")
-print(fibo.circuit) 
+print(fibo.circuit)
 print("Print Circuit using __json__ method in python:")
+
+
 class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
-        if hasattr(obj, '__json__'):
+        if hasattr(obj, "__json__"):
             return obj.__json__()
         return super().default(obj)
+
+
 circuit_json = json.dumps(fibo.circuit, cls=CustomEncoder, indent=4)
 print(circuit_json)
 
@@ -113,7 +120,7 @@ print(circuit_json)
 trace_generator = TraceGenerator(fibo.circuit.trace)
 trace_witness = trace_generator.generate(None)
 print("Print TraceWitness using custom __str__ method in python:")
-print(trace_witness)  
+print(trace_witness)
 print("Print TraceWitness using __json__ method in python:")
 trace_witness_json = json.dumps(trace_witness, cls=CustomEncoder, indent=4)
 print(trace_witness_json)
