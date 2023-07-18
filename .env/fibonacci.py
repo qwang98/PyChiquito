@@ -118,6 +118,6 @@ print("Print TraceWitness using __json__ method in python:")
 trace_witness_json = json.dumps(trace_witness, cls=CustomEncoder, indent=4)
 print(trace_witness_json)
 
-# Rust bindings
+# Rust bindings for Circuit
 print("Call rust bindings, parse json to Chiquito ast, and print using Debug trait:")
-rust_chiquito.print_ast(circuit_json)
+rust_chiquito.convert_and_print_ast(circuit_json)

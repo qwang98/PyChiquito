@@ -10,12 +10,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.19.1", features = ["extension-module"] }
-halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", features = ["circuit-params"], tag = "v2023_04_20" }
-polyexen = { git =  "https://github.com/Dhole/polyexen.git", rev = "67148a8aabb000a61a169b2533b2526c5b76c42f" }
-num-bigint = { version = "0.4", features = [ "rand" ] }
-chiquito = { git = "https://github.com/privacy-scaling-explorations/chiquito", rev = "7d7317b6b7d06e6169f5e271b4512d3c9aaa1092" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+chiquito = { path = "./src/chiquito" }
 
 [patch."https://github.com/privacy-scaling-explorations/halo2.git"]
 halo2_proofs = { git = "https://github.com/appliedzkp/halo2.git", rev = "d3746109d7d38be53afc8ddae8fdfaf1f02ad1d7" }

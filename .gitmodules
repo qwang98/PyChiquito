@@ -1,0 +1,3 @@
+[submodule "src/chiquito"]
+	path = src/chiquito
+	url = https://github.com/privacy-scaling-explorations/chiquito
