@@ -91,6 +91,7 @@ name = "chiquito"
 version = "0.1.0"
 dependencies = [
  "halo2_proofs",
+ "halo2curves",
  "num-bigint",
  "polyexen",
  "serde",
@@ -270,6 +271,7 @@ dependencies = [
  "paste",
  "rand",
  "rand_core",
+ "serde",
  "static_assertions",
  "subtle",
 ]
@@ -685,6 +687,7 @@ name = "rust_chiquito"
 version = "0.1.0"
 dependencies = [
  "chiquito",
+ "halo2_proofs",
  "pyo3",
  "serde",
  "serde_json",

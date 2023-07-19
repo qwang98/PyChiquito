@@ -9,9 +9,18 @@ from util import uuid
 
 F = bn128.FQ
 
-# Monkey patching for __json__ method that doesn't exist in F.
-# Returns the n: int field of super class FQ.
-F.__json__ = lambda self: self.n
+
+def json_method(self: F):
+    # Convert the integer to a byte array
+    byte_array = self.n.to_bytes(32, "little")
+
+    # Split into four 64-bit integers
+    ints = [int.from_bytes(byte_array[i * 8 : i * 8 + 8], "little") for i in range(4)]
+
+    return ints
+
+
+F.__json__ = json_method
 
 #######
 # dsl #

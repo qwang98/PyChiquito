@@ -1,9 +1,10 @@
 use chiquito::ast::Circuit;
 use pyo3::{prelude::*, types::PyString};
+use halo2_proofs::halo2curves::bn256::Fr;
 
 #[pyfunction]
 fn convert_and_print_ast(json: &PyString) {
-    let circuit: Circuit<u32, ()> =
+    let circuit: Circuit<Fr, ()> =
         serde_json::from_str(json.to_str().expect("PyString convertion failed."))
             .expect("Json deserialization to Circuit failed.");
     println!("{:?}", circuit);
