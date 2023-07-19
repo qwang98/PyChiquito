@@ -52,7 +52,7 @@ class CircuitContext:
         else:
             raise ValueError("Can only expose a forward signal.")
 
-    # TODO: Implement import_halo2_advice and import_halo2_fixed. Currently we ignore imported types.
+    # import_halo2_advice and import_halo2_fixed are ignored.
 
     def step_type(
         self: CircuitContext, step_type_context: StepTypeContext
@@ -67,7 +67,7 @@ class CircuitContext:
 
     def trace(
         self: CircuitContext, trace_def: Callable[[TraceContext, Any], None]
-    ):  # Any instead of TraceArgs
+    ):  # TraceArgs are Any.
         self.circuit.set_trace(trace_def)
 
     def fixed_gen(
@@ -96,14 +96,14 @@ class StepTypeContext:
 
     def setup(
         self: StepTypeContext, setup_def: Callable[[StepTypeSetupContext], None]
-    ) -> None:  # def is a keyword in python
+    ) -> None: 
         ctx = StepTypeSetupContext(self.step_type)
         setup_def(ctx)
         print("setup called")
 
     def wg(
         self: StepTypeContext, wg_def: Callable[[TraceContext, Any], None]
-    ):  # Any instead of Args
+    ):  # Args are Any.
         self.step_type.set_wg(wg_def)
 
 
@@ -155,7 +155,7 @@ class Constraint:
     expr: Expr
     typing: Typing
 
-    def from_expr(expr: Expr) -> Constraint:  # `from` is a reserved keyword in Python
+    def from_expr(expr: Expr) -> Constraint:  # Cannot call function `from`, a reserved keyword in Python.
         annotation: str = str(expr)
         if isinstance(expr, StepTypeNext):
             return Constraint(annotation, expr, Typing.Boolean)
@@ -167,7 +167,7 @@ class Constraint:
 
     def cb_and(
         inputs: List[ToConstraint],
-    ) -> Constraint:  # `and` is a reserved keyword in Python
+    ) -> Constraint:  # Cannot call function `and`, a reserved keyword in Python
         inputs = [to_constraint(input) for input in inputs]
         annotations: List[str] = []
         expr = Expr(Const(F(1)))
@@ -186,7 +186,7 @@ class Constraint:
 
     def cb_or(
         inputs: List[ToConstraint],
-    ) -> Constraint:  # `or` is a reserved keyword in Python
+    ) -> Constraint:  # Cannot call function `or`, a reserved keyword in Python
         inputs = [to_constraint(input) for input in inputs]
         annotations: List[str] = []
         exprs: List[Expr] = []
@@ -275,7 +275,7 @@ class Constraint:
 
     def cb_not(
         constraint: ToConstraint,
-    ) -> Constraint:  # `not` is a reserved keyword in Python
+    ) -> Constraint:  # Cannot call function `not`, a reserved keyword in Python
         constraint = to_constraint(constraint)
         if constraint.typing == Typing.AntiBooly:
             raise ValueError(
@@ -296,7 +296,7 @@ class Constraint:
         return Constraint(
             f"if(next step is {step_type.annotation})then({constraint.annotation})",
             step_type.next()
-            * constraint.expr,  # TODO: implement StepTypeHandler and its `next` method
+            * constraint.expr,
             constraint.typing,
         )
 
@@ -305,14 +305,14 @@ class Constraint:
             f"next step must be {step_type.annotation}",
             Constraint.cb_not(
                 step_type.next()
-            ),  # TODO: implement StepTypeHandler and its `next` method
+            ),
             Typing.AntiBooly,
         )
 
     def next_step_must_not_be(step_type: StepType) -> Constraint:
         return Constraint(
             f"next step must not be {step_type.annotation}",
-            step_type.next(),  # TODO: implement StepTypeHandler and its `next` method
+            step_type.next(),
             Typing.AntiBooly,
         )
 
@@ -326,7 +326,7 @@ class Constraint:
         else:
             return Expr(Const(F(0)))
 
-    # TODO: Implement lookup table after the lookup abstraction pr is merged.
+    # TODO: Implement lookup table after the lookup abstraction PR is merged.
 
 
 #######
@@ -360,8 +360,6 @@ class Circuit:
     forward_signals: List[ForwardSignal] = field(default_factory=list)
     shared_signals: List[SharedSignal] = field(default_factory=list)
     fixed_signals: List[FixedSignal] = field(default_factory=list)
-    # halo2_advice: List[ImportedHalo2Advice] = field(default_factory=list)
-    # halo2_fixed: List[ImportedHalo2Fixed] = field(default_factory=list)
     exposed: List[ForwardSignal] = field(default_factory=list)
     annotations: Dict[int, str] = field(default_factory=dict)
     trace: Optional[Callable[[TraceContext, Any], None]] = None
@@ -464,7 +462,7 @@ class Circuit:
 
     def set_trace(
         self: Circuit, trace_def: Callable[[TraceContext, Any], None]
-    ):  # Any instead of TraceArgs
+    ):  # TraceArgs are Any.
         if self.trace is not None:
             raise Exception("Circuit cannot have more than one trace generator.")
         else:
@@ -505,7 +503,7 @@ class StepType:
     annotations: Dict[int, str]
     wg: Optional[
         Callable[[StepInstance, Any], None]
-    ]  # Any instead of Args. Not passed to Rust Chiquito.
+    ]  # Args are Any. Not passed to Rust Chiquito.
 
     def new(name: str) -> StepType:
         return StepType(uuid(), name, [], [], [], {}, None)
@@ -579,7 +577,7 @@ class StepType:
 
     def set_wg(
         self, wg_def: Callable[[StepInstance, Any], None]
-    ):  # Any instead of Args
+    ):  # Args are Any.
         self.wg = wg_def
 
     def next(self: StepType) -> StepTypeNext:
@@ -969,7 +967,7 @@ class StepTypeNext(Queriable):
         }
 
 
-# Ignored Queriable::Halo2AdviceQuery and Queriable::Halo2FixedQuery
+# Ignored Queriable::Halo2AdviceQuery and Queriable::Halo2FixedQuery.
 
 
 ################
@@ -1102,7 +1100,7 @@ class TraceContext:
 
     def add(
         self: TraceContext, circuit: CircuitContext, step: StepTypeContext, args: Any
-    ):  # StepTypeContext instead of StepTypeWGHandler, because StepTypeContext contains step type id and `wg` method that returns witness generation function
+    ):  # Use StepTypeContext instead of StepTypeWGHandler, because StepTypeContext contains step type id and `wg` method that returns witness generation function.
         witness = StepInstance.new(step.step_type.id)
         step.wg(circuit)
         if step.step_type.wg is None:
@@ -1116,7 +1114,7 @@ class TraceContext:
         self.witness.height = height
 
 
-Trace = Callable[[TraceContext, Any], None]  # Any instead of TraceArgs
+Trace = Callable[[TraceContext, Any], None]  # TraceArgs are Any.
 
 
 @dataclass
@@ -1125,7 +1123,7 @@ class TraceGenerator:
 
     def generate(
         self: TraceGenerator, args: Any
-    ) -> TraceWitness:  # Any instead of TraceArgs
+    ) -> TraceWitness:  # Args are Any.
         ctx = TraceContext()
         self.trace(ctx, args)
         return ctx.witness
@@ -1197,11 +1195,3 @@ print(
         None,
     ).__json__()
 )
-
-# class StepType:
-#     id: int
-#     name: str
-#     signals: List[InternalSignal]
-#     constraints: List[ASTConstraint]
-#     transition_constraints: List[TransitionConstraint]
-#     annotations: Dict[int, str]
