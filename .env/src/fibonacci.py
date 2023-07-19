@@ -6,7 +6,7 @@ import rust_chiquito  # rust bindings
 
 from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext
 from chiquito_ast import StepType
-from cb import Constraint
+from cb import Constraint, eq
 from query import Queriable
 from wit_gen import TraceContext, StepInstance, TraceGenerator
 
@@ -54,9 +54,9 @@ class FiboStep(StepTypeContext):
         )  # `self.c` is required instead of `c`, because wg needs to access `self.c`.
 
         def setup_def(ctx: StepTypeSetupContext):
-            ctx.constr(Constraint.eq(circuit.a + circuit.b, self.c))
-            ctx.transition(Constraint.eq(circuit.b, circuit.a.next()))
-            ctx.transition(Constraint.eq(self.c, circuit.b.next()))
+            ctx.constr(eq(circuit.a + circuit.b, self.c))
+            ctx.transition(eq(circuit.b, circuit.a.next()))
+            ctx.transition(eq(self.c, circuit.b.next()))
 
         self.setup(setup_def)
 
@@ -77,7 +77,7 @@ class FiboLastStep(StepTypeContext):
         self.c = self.internal("c")
 
         def setup_def(ctx: StepTypeSetupContext):
-            ctx.constr(Constraint.eq(circuit.a + circuit.b, self.c))
+            ctx.constr(eq(circuit.a + circuit.b, self.c))
 
         self.setup(setup_def)
 

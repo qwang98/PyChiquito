@@ -1,6 +1,6 @@
 from __future__ import annotations
 from py_ecc import bn128
-import threading
+from uuid import uuid1
 
 F = bn128.FQ
 
@@ -18,17 +18,6 @@ def json_method(self: F):
 F.__json__ = json_method
 
 
-uuid_gen = threading.Lock()
-_uuid = 0
-
-
+# int field is the u128 version of uuid.
 def uuid() -> int:
-    global _uuid
-    with uuid_gen:
-        _uuid += 1
-        return _uuid
-
-
-################
-# helper types #
-################
+    return uuid1(node=int.from_bytes([10, 10, 10, 10, 10, 10], byteorder="little")).int
