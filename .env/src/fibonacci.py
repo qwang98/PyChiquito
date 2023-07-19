@@ -4,17 +4,11 @@ from py_ecc import bn128
 import json
 import rust_chiquito  # rust bindings
 
-from pychiquito import (
-    CircuitContext,
-    StepTypeContext,
-    StepTypeSetupContext,
-    StepType,
-    Constraint,
-    Queriable,
-    TraceContext,
-    StepInstance,
-    TraceGenerator,
-)
+from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext
+from chiquito_ast import StepType
+from cb import Constraint
+from query import Queriable
+from wit_gen import TraceContext, StepInstance, TraceGenerator
 
 F = bn128.FQ
 
