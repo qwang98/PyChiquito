@@ -1,6 +1,6 @@
 use chiquito::ast::Circuit;
-use pyo3::{prelude::*, types::PyString};
 use halo2_proofs::halo2curves::bn256::Fr;
+use pyo3::{prelude::*, types::PyString};
 
 #[pyfunction]
 fn convert_and_print_ast(json: &PyString) {
