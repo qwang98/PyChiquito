@@ -5,10 +5,10 @@ import json
 import rust_chiquito  # rust bindings
 
 from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext
-from chiquito_ast import StepType
+from chiquito_ast import StepType, First, Last, Step
 from cb import eq
 from query import Queriable
-from wit_gen import TraceContext, StepInstance, TraceGenerator
+from wit_gen import TraceContext, StepInstance
 
 F = bn128.FQ
 
@@ -27,7 +27,12 @@ class Fibonacci(CircuitContext):
         )
 
         self.pragma_first_step(self.fibo_step)
-        # self.pragma_last_step(self.fibo_last_step)
+        self.pragma_last_step(self.fibo_last_step)
+        self.pragma_disable_q_enable()
+        
+        self.expose(self.b, First)
+        self.expose(self.a, Last)
+        self.expose(self.a, Step(1))
 
     def trace(self: Fibonacci):
         def trace_def(ctx: TraceContext, _: Any):  # Any instead of TraceArgs
@@ -111,14 +116,16 @@ circuit_json = json.dumps(fibo.circuit, cls=CustomEncoder, indent=4)
 print(circuit_json)
 
 # Print TraceWitness
-trace_generator = TraceGenerator(fibo.circuit.trace)
-trace_witness = trace_generator.generate(None)
-print("Print TraceWitness using custom __str__ method in python:")
-print(trace_witness)
-print("Print TraceWitness using __json__ method in python:")
-trace_witness_json = json.dumps(trace_witness, cls=CustomEncoder, indent=4)
-print(trace_witness_json)
+# trace_generator = TraceGenerator(fibo.circuit.trace)
+# trace_witness = trace_generator.generate(None)
+# print("Print TraceWitness using custom __str__ method in python:")
+# print(trace_witness)
+# print("Print TraceWitness using __json__ method in python:")
+# trace_witness_json = json.dumps(trace_witness, cls=CustomEncoder, indent=4)
+# print(trace_witness_json)
 
 # Rust bindings for Circuit
-print("Call rust bindings, parse json to Chiquito ast, and print using Debug trait:")
-rust_chiquito.convert_and_print_ast(circuit_json)
+# print("Call rust bindings, parse json to Chiquito ast, and print using Debug trait:")
+# rust_chiquito.convert_and_print_ast(circuit_json)
+# print("Call rust bindings, parse json to Chiquito TraceWitness, and print using Debug trait:")
+# rust_chiquito.convert_and_print_trace_witness(trace_witness_json)

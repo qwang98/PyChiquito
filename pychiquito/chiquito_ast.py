@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Callable, List, Dict, Optional, Any
+from typing import Callable, List, Dict, Optional, Any, Tuple
 from dataclasses import dataclass, field, asdict
 
 from wit_gen import TraceContext, FixedGenContext, StepInstance
 from expr import Expr
 from util import uuid
+from query import Queriable
 
 #######
 # ast #
@@ -37,13 +38,14 @@ class Circuit:
     forward_signals: List[ForwardSignal] = field(default_factory=list)
     shared_signals: List[SharedSignal] = field(default_factory=list)
     fixed_signals: List[FixedSignal] = field(default_factory=list)
-    exposed: List[ForwardSignal] = field(default_factory=list)
+    exposed: List[Tuple[Queriable, ExposeOffset]] = field(default_factory=list)
     annotations: Dict[int, str] = field(default_factory=dict)
     trace: Optional[Callable[[TraceContext, Any], None]] = None
     fixed_gen: Optional[Callable] = None
     first_step: Optional[int] = None
     last_step: Optional[int] = None
     num_steps: int = 0
+    q_enable: bool = True
     id: int = uuid()
 
     def __str__(self: Circuit):
@@ -70,8 +72,8 @@ class Circuit:
             else ""
         )
         exposed_str = (
-            "\n\t\t" + ",\n\t\t ".join(str(e) for e in self.exposed) + "\n\t"
-            if self.exposed
+            "\n\t\t" + ",\n\t\t".join(f"({str(lhs)}, {str(rhs)})" for (lhs, rhs) in self.fixed_signals) + "\n\t"
+            if self.fixed_signals
             else ""
         )
         annotations_str = (
@@ -95,6 +97,7 @@ class Circuit:
             f"\tfirst_step={self.first_step},\n"
             f"\tlast_step={self.last_step},\n"
             f"\tnum_steps={self.num_steps}\n"
+            f"\tq_enable={self.q_enable}\n"
             f")"
         )
 
@@ -104,11 +107,12 @@ class Circuit:
             "forward_signals": [x.__json__() for x in self.forward_signals],
             "shared_signals": [x.__json__() for x in self.shared_signals],
             "fixed_signals": [x.__json__() for x in self.fixed_signals],
-            "exposed": [x.__json__() for x in self.exposed],
+            "exposed": [[queriable.__json__(), offset.__json__()] for (queriable, offset) in self.exposed],
             "annotations": self.annotations,
             "first_step": self.first_step,
             "last_step": self.last_step,
             "num_steps": self.num_steps,
+            "q_enable": self.q_enable,
             "id": self.id,
         }
 
@@ -130,8 +134,8 @@ class Circuit:
         self.annotations[signal.id] = name
         return signal
 
-    def expose(self: Circuit, forward_signal: ForwardSignal):
-        self.exposed.append(forward_signal)
+    def expose(self: Circuit, signal: Queriable, offset: ExposeOffset):
+        self.exposed.append((signal, offset))
 
     def add_step_type(self: Circuit, step_type: StepType, name: str):
         self.annotations[step_type.id] = name
@@ -331,6 +335,35 @@ class SharedSignal:
     def __json__(self: SharedSignal):
         return asdict(self)
 
+class ExposeOffset:
+    pass
+
+
+class First(ExposeOffset):
+
+    def __str__(self: First):
+        return "First"
+
+    def __json__(self: First):
+        return {"First": 0}
+
+class Last(ExposeOffset):
+
+    def __str__(self: Last):
+        return "Last"
+
+    def __json__(self: Last):
+        return {"Last": -1}
+
+@dataclass
+class Step(ExposeOffset):
+    offset: int
+    
+    def __str__(self: Step):
+        return f"Step({self.offset})"
+
+    def __json__(self: Step):
+        return {"Step": self.offset}
 
 @dataclass
 class FixedSignal:

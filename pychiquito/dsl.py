@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Callable, Any
 from dataclasses import dataclass
 
-from chiquito_ast import Circuit, StepType
+from chiquito_ast import Circuit, StepType, ExposeOffset, ForwardSignal, SharedSignal
 from query import Internal, Forward, Queriable, Shared, Fixed
 from wit_gen import FixedGenContext, TraceContext
 from cb import Constraint, Typing, ToConstraint, to_constraint
@@ -32,11 +32,11 @@ class CircuitContext:
     def fixed(self: CircuitContext, name: str) -> Fixed:
         return Fixed(self.circuit.add_fixed(name), 0)
 
-    def expose(self: CircuitContext, forward: Queriable):
-        if isinstance(forward, Forward):
-            self.circuit.expose(forward.signal)
+    def expose(self: CircuitContext, signal: Queriable, offset: ExposeOffset):
+        if isinstance(signal, (Forward, Shared)):
+            self.circuit.expose(signal, offset)
         else:
-            raise ValueError("Can only expose a forward signal.")
+            raise TypeError(f"Can only expose ForwardSignal or SharedSignal.")
 
     # import_halo2_advice and import_halo2_fixed are ignored.
 
@@ -66,11 +66,14 @@ class CircuitContext:
     ) -> None:
         self.circuit.first_step = step_type_context.step_type.id
 
-    def pragma_last_step(self, step_type_context: StepTypeContext) -> None:
+    def pragma_last_step(self: CircuitContext, step_type_context: StepTypeContext) -> None:
         self.circuit.last_step = step_type_context.step_type.id
 
-    def pragma_num_steps(self, num_steps: int) -> None:
+    def pragma_num_steps(self: CircuitContext, num_steps: int) -> None:
         self.circuit.num_steps = num_steps
+
+    def pragma_disable_q_enable(self: CircuitContext) -> None:
+        self.circuit.q_enable = False
 
 
 class StepTypeContext:
