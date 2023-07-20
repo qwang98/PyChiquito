@@ -6,7 +6,7 @@ import rust_chiquito  # rust bindings
 
 from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext
 from chiquito_ast import StepType
-from cb import Constraint, eq
+from cb import eq
 from query import Queriable
 from wit_gen import TraceContext, StepInstance, TraceGenerator
 
