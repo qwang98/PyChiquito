@@ -1,6 +1,13 @@
-use chiquito::{ast::Circuit, wit_gen::TraceWitness, frontend::pychiquito::{chiquito_ast_to_halo2, chiquito_verify_proof}};
+use chiquito::{
+    ast::Circuit,
+    frontend::pychiquito::{chiquito_ast_to_halo2, chiquito_verify_proof},
+    wit_gen::TraceWitness,
+};
 use halo2_proofs::halo2curves::bn256::Fr;
-use pyo3::{prelude::*, types::{PyString, PyLong}};
+use pyo3::{
+    prelude::*,
+    types::{PyLong, PyString},
+};
 
 #[pyfunction]
 fn convert_and_print_ast(json: &PyString) {
@@ -28,7 +35,10 @@ fn ast_to_halo2(json: &PyString) -> u128 {
 
 #[pyfunction]
 fn verify_proof(witness_json: &PyString, ast_uuid: &PyLong) {
-    chiquito_verify_proof(witness_json.to_str().expect("PyString convertion failed."), ast_uuid.extract().expect("PyLong convertion failed."));
+    chiquito_verify_proof(
+        witness_json.to_str().expect("PyString convertion failed."),
+        ast_uuid.extract().expect("PyLong convertion failed."),
+    );
 }
 
 #[pymodule]
