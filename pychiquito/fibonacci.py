@@ -2,19 +2,13 @@ from __future__ import annotations
 from typing import Any, Tuple
 from py_ecc import bn128
 import json
-import rust_chiquito # rust bindings
+import rust_chiquito  # rust bindings
 
-from pychiquito import (
-    CircuitContext,
-    StepTypeContext,
-    StepTypeSetupContext,
-    StepType,
-    Constraint,
-    Queriable,
-    TraceContext,
-    StepInstance,
-    TraceGenerator,
-)
+from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext
+from chiquito_ast import StepType
+from cb import Constraint, eq
+from query import Queriable
+from wit_gen import TraceContext, StepInstance, TraceGenerator
 
 F = bn128.FQ
 
@@ -28,7 +22,9 @@ class Fibonacci(CircuitContext):
         self.b: Queriable = self.forward("b")
 
         self.fibo_step: StepTypeContext = self.step_type(FiboStep(self, "fibo_step"))
-        self.fibo_last_step: StepTypeContext = self.step_type(FiboLastStep(self, "fibo_last_step"))
+        self.fibo_last_step: StepTypeContext = self.step_type(
+            FiboLastStep(self, "fibo_last_step")
+        )
 
         self.pragma_first_step(self.fibo_step)
         # self.pragma_last_step(self.fibo_last_step)
@@ -58,9 +54,9 @@ class FiboStep(StepTypeContext):
         )  # `self.c` is required instead of `c`, because wg needs to access `self.c`.
 
         def setup_def(ctx: StepTypeSetupContext):
-            ctx.constr(Constraint.eq(circuit.a + circuit.b, self.c))
-            ctx.transition(Constraint.eq(circuit.b, circuit.a.next()))
-            ctx.transition(Constraint.eq(self.c, circuit.b.next()))
+            ctx.constr(eq(circuit.a + circuit.b, self.c))
+            ctx.transition(eq(circuit.b, circuit.a.next()))
+            ctx.transition(eq(self.c, circuit.b.next()))
 
         self.setup(setup_def)
 
@@ -81,7 +77,7 @@ class FiboLastStep(StepTypeContext):
         self.c = self.internal("c")
 
         def setup_def(ctx: StepTypeSetupContext):
-            ctx.constr(Constraint.eq(circuit.a + circuit.b, self.c))
+            ctx.constr(eq(circuit.a + circuit.b, self.c))
 
         self.setup(setup_def)
 
@@ -95,17 +91,22 @@ class FiboLastStep(StepTypeContext):
 
         super().wg(wg_def)
 
+
 # Print Circuit
 fibo = Fibonacci()
 fibo.trace()
 print("Print Circuit using custom __str__ method in python:")
-print(fibo.circuit) 
+print(fibo.circuit)
 print("Print Circuit using __json__ method in python:")
+
+
 class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
-        if hasattr(obj, '__json__'):
+        if hasattr(obj, "__json__"):
             return obj.__json__()
         return super().default(obj)
+
+
 circuit_json = json.dumps(fibo.circuit, cls=CustomEncoder, indent=4)
 print(circuit_json)
 
@@ -113,11 +114,11 @@ print(circuit_json)
 trace_generator = TraceGenerator(fibo.circuit.trace)
 trace_witness = trace_generator.generate(None)
 print("Print TraceWitness using custom __str__ method in python:")
-print(trace_witness)  
+print(trace_witness)
 print("Print TraceWitness using __json__ method in python:")
 trace_witness_json = json.dumps(trace_witness, cls=CustomEncoder, indent=4)
 print(trace_witness_json)
 
-# Rust bindings
+# Rust bindings for Circuit
 print("Call rust bindings, parse json to Chiquito ast, and print using Debug trait:")
-rust_chiquito.print_ast(circuit_json)
+rust_chiquito.convert_and_print_ast(circuit_json)

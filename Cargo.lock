@@ -89,11 +89,13 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "chiquito"
 version = "0.1.0"
-source = "git+https://github.com/privacy-scaling-explorations/chiquito?rev=7d7317b6b7d06e6169f5e271b4512d3c9aaa1092#7d7317b6b7d06e6169f5e271b4512d3c9aaa1092"
 dependencies = [
  "halo2_proofs",
+ "halo2curves",
  "num-bigint",
  "polyexen",
+ "serde",
+ "serde_json",
  "uuid",
 ]
 
@@ -269,6 +271,7 @@ dependencies = [
  "paste",
  "rand",
  "rand_core",
+ "serde",
  "static_assertions",
  "subtle",
 ]
@@ -685,8 +688,6 @@ version = "0.1.0"
 dependencies = [
  "chiquito",
  "halo2_proofs",
- "num-bigint",
- "polyexen",
  "pyo3",
  "serde",
  "serde_json",
