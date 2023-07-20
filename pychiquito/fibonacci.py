@@ -3,6 +3,7 @@ from typing import Any, Tuple
 from py_ecc import bn128
 import json
 import rust_chiquito  # rust bindings
+import rust_chiquito  # rust bindings
 
 from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext
 from chiquito_ast import StepType, First, Last, Step
