@@ -72,8 +72,10 @@ class Circuit:
             else ""
         )
         exposed_str = (
-            "\n\t\t" + ",\n\t\t".join(f"({str(lhs)}, {str(rhs)})" for (lhs, rhs) in self.fixed_signals) + "\n\t"
-            if self.fixed_signals
+            "\n\t\t"
+            + ",\n\t\t".join(f"({str(lhs)}, {str(rhs)})" for (lhs, rhs) in self.exposed)
+            + "\n\t"
+            if self.exposed
             else ""
         )
         annotations_str = (
@@ -107,7 +109,10 @@ class Circuit:
             "forward_signals": [x.__json__() for x in self.forward_signals],
             "shared_signals": [x.__json__() for x in self.shared_signals],
             "fixed_signals": [x.__json__() for x in self.fixed_signals],
-            "exposed": [[queriable.__json__(), offset.__json__()] for (queriable, offset) in self.exposed],
+            "exposed": [
+                [queriable.__json__(), offset.__json__()]
+                for (queriable, offset) in self.exposed
+            ],
             "annotations": self.annotations,
             "first_step": self.first_step,
             "last_step": self.last_step,
@@ -335,35 +340,37 @@ class SharedSignal:
     def __json__(self: SharedSignal):
         return asdict(self)
 
+
 class ExposeOffset:
     pass
 
 
 class First(ExposeOffset):
-
     def __str__(self: First):
         return "First"
 
     def __json__(self: First):
         return {"First": 0}
 
-class Last(ExposeOffset):
 
+class Last(ExposeOffset):
     def __str__(self: Last):
         return "Last"
 
     def __json__(self: Last):
         return {"Last": -1}
 
+
 @dataclass
 class Step(ExposeOffset):
     offset: int
-    
+
     def __str__(self: Step):
         return f"Step({self.offset})"
 
     def __json__(self: Step):
         return {"Step": self.offset}
+
 
 @dataclass
 class FixedSignal:

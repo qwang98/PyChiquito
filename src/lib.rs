@@ -12,7 +12,9 @@ fn convert_and_print_ast(json: &PyString) {
 
 #[pyfunction]
 fn convert_and_print_trace_witness(json: &PyString) {
-    let trace_witness: TraceWitness<Fr> = serde_json::from_str(json.to_str().expect("PyString convertion failed.")).expect("Json deserialization to TraceWitness failed.");
+    let trace_witness: TraceWitness<Fr> =
+        serde_json::from_str(json.to_str().expect("PyString convertion failed."))
+            .expect("Json deserialization to TraceWitness failed.");
     println!("{:?}", trace_witness);
 }
 

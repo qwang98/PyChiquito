@@ -37,6 +37,7 @@ class Constraint:
     def __str__(self: Constraint) -> str:
         return self.annotation
 
+
 def cb_and(
     inputs: List[ToConstraint],
 ) -> Constraint:  # Cannot call function `and`, a reserved keyword in Python
@@ -44,10 +45,7 @@ def cb_and(
     annotations: List[str] = []
     expr = Const(F(1))
     for constraint in inputs:
-        if (
-            constraint.typing == Typing.Boolean
-            or constraint.typing == Typing.Unknown
-        ):
+        if constraint.typing == Typing.Boolean or constraint.typing == Typing.Unknown:
             annotations.append(constraint.annotation)
             expr = expr * constraint.expr
         else:
@@ -56,6 +54,7 @@ def cb_and(
             )
     return Constraint(f"({' AND '.join(annotations)})", expr, Typing.Boolean)
 
+
 def cb_or(
     inputs: List[ToConstraint],
 ) -> Constraint:  # Cannot call function `or`, a reserved keyword in Python
@@ -63,10 +62,7 @@ def cb_or(
     annotations: List[str] = []
     exprs: List[Expr] = []
     for constraint in inputs:
-        if (
-            constraint.typing == Typing.Boolean
-            or constraint.typing == Typing.Unknown
-        ):
+        if constraint.typing == Typing.Boolean or constraint.typing == Typing.Unknown:
             annotations.append(constraint.annotation)
             exprs.append(constraint.expr)
         else:
@@ -77,6 +73,7 @@ def cb_or(
         Constraint.cb_and([Constraint.cb_not(expr) for expr in exprs])
     )
     return Constraint(f"({' OR '.join(annotations)})", result.expr, Typing.Boolean)
+
 
 def xor(lhs: ToConstraint, rhs: ToConstraint) -> Constraint:
     (lhs, rhs) = (to_constraint(lhs), to_constraint(rhs))
@@ -93,6 +90,7 @@ def xor(lhs: ToConstraint, rhs: ToConstraint) -> Constraint:
             f"Expected Boolean or Unknown constraints, got AntiBooly in one of lhs or rhs constraints (lhs constraint: {lhs.annotation}) (rhs constraint: {rhs.annotation})"
         )
 
+
 def eq(lhs: ToConstraint, rhs: ToConstraint) -> Constraint:
     (lhs, rhs) = (to_constraint(lhs), to_constraint(rhs))
     return Constraint(
@@ -100,6 +98,7 @@ def eq(lhs: ToConstraint, rhs: ToConstraint) -> Constraint:
         lhs.expr - rhs.expr,
         Typing.AntiBooly,
     )
+
 
 def select(
     selector: ToConstraint, when_true: ToConstraint, when_false: ToConstraint
@@ -116,10 +115,9 @@ def select(
     return Constraint(
         f"if({selector.annotation})then({when_true.annotation})else({when_false.annotation})",
         selector.expr * when_true.expr + (F(1) - selector.expr) * when_false.expr,
-        when_true.typing
-        if when_true.typing == when_false.typing
-        else Typing.Unknown,
+        when_true.typing if when_true.typing == when_false.typing else Typing.Unknown,
     )
+
 
 def when(selector: ToConstraint, when_true: ToConstraint) -> Constraint:
     (selector, when_true) = (to_constraint(selector), to_constraint(when_true))
@@ -133,6 +131,7 @@ def when(selector: ToConstraint, when_true: ToConstraint) -> Constraint:
         when_true.typing,
     )
 
+
 def unless(selector: ToConstraint, when_false: ToConstraint) -> Constraint:
     (selector, when_false) = (to_constraint(selector), to_constraint(when_false))
     if selector.typing == Typing.AntiBooly:
@@ -144,6 +143,7 @@ def unless(selector: ToConstraint, when_false: ToConstraint) -> Constraint:
         (F(1) - selector.expr) * when_false.expr,
         when_false.typing,
     )
+
 
 def cb_not(
     constraint: ToConstraint,
@@ -157,11 +157,13 @@ def cb_not(
         f"NOT({constraint.annotation})", F(1) - constraint.expr, Typing.Boolean
     )
 
+
 def isz(constraint: ToConstraint) -> Constraint:
     constraint = to_constraint(constraint)
     return Constraint(
         f"0 == {constraint.annotation}", constraint.expr, Typing.AntiBooly
     )
+
 
 def if_next_step(step_type: StepType, constraint: ToConstraint) -> Constraint:
     constraint = to_constraint(constraint)
@@ -171,6 +173,7 @@ def if_next_step(step_type: StepType, constraint: ToConstraint) -> Constraint:
         constraint.typing,
     )
 
+
 def next_step_must_be(step_type: StepType) -> Constraint:
     return Constraint(
         f"next step must be {step_type.annotation}",
@@ -178,12 +181,14 @@ def next_step_must_be(step_type: StepType) -> Constraint:
         Typing.AntiBooly,
     )
 
+
 def next_step_must_not_be(step_type: StepType) -> Constraint:
     return Constraint(
         f"next step must not be {step_type.annotation}",
         StepTypeNext(step_type),
         Typing.AntiBooly,
     )
+
 
 def rlc(exprs: List[ToExpr], randomness: Expr) -> Expr:
     if len(exprs) > 0:
@@ -194,6 +199,7 @@ def rlc(exprs: List[ToExpr], randomness: Expr) -> Expr:
         return init
     else:
         return Expr(Const(F(0)))
+
 
 # TODO: Implement lookup table after the lookup abstraction PR is merged.
 

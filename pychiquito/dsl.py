@@ -66,7 +66,9 @@ class CircuitContext:
     ) -> None:
         self.circuit.first_step = step_type_context.step_type.id
 
-    def pragma_last_step(self: CircuitContext, step_type_context: StepTypeContext) -> None:
+    def pragma_last_step(
+        self: CircuitContext, step_type_context: StepTypeContext
+    ) -> None:
         self.circuit.last_step = step_type_context.step_type.id
 
     def pragma_num_steps(self: CircuitContext, num_steps: int) -> None:
