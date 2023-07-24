@@ -5,8 +5,8 @@ import json
 import rust_chiquito  # rust bindings
 
 from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext
-from chiquito_ast import StepType
-from cb import Constraint, eq
+from chiquito_ast import StepType, First, Last, Step
+from cb import eq
 from query import Queriable
 from wit_gen import TraceContext, StepInstance, TraceGenerator
 
@@ -27,7 +27,12 @@ class Fibonacci(CircuitContext):
         )
 
         self.pragma_first_step(self.fibo_step)
-        # self.pragma_last_step(self.fibo_last_step)
+        self.pragma_last_step(self.fibo_last_step)
+        self.pragma_disable_q_enable()
+
+        self.expose(self.b, First())
+        self.expose(self.a, Last())
+        self.expose(self.a, Step(1))
 
     def trace(self: Fibonacci):
         def trace_def(ctx: TraceContext, _: Any):  # Any instead of TraceArgs
@@ -107,6 +112,10 @@ class CustomEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
+# Print Circuit
+print("Print Circuit using custom __str__ method in python:")
+print(fibo.circuit)
+print("Print Circuit using __json__ method in python:")
 circuit_json = json.dumps(fibo.circuit, cls=CustomEncoder, indent=4)
 print(circuit_json)
 
@@ -122,3 +131,7 @@ print(trace_witness_json)
 # Rust bindings for Circuit
 print("Call rust bindings, parse json to Chiquito ast, and print using Debug trait:")
 rust_chiquito.convert_and_print_ast(circuit_json)
+print(
+    "Call rust bindings, parse json to Chiquito TraceWitness, and print using Debug trait:"
+)
+rust_chiquito.convert_and_print_trace_witness(trace_witness_json)

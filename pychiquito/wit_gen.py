@@ -45,7 +45,9 @@ class StepInstance:
     def __json__(self: StepInstance):
         return {
             "step_type_uuid": self.step_type_uuid,
-            "assignments": {lhs.uuid(): rhs for (lhs, rhs) in self.assignments.items()},
+            "assignments": {
+                lhs.uuid(): [lhs, rhs] for (lhs, rhs) in self.assignments.items()
+            },
         }
 
 
