@@ -92,9 +92,7 @@ version = "0.1.0"
 dependencies = [
  "halo2_proofs",
  "halo2curves",
- "lazy_static",
  "num-bigint",
- "once_cell",
  "polyexen",
  "serde",
  "serde_json",
