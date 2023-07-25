@@ -4,9 +4,7 @@ from py_ecc import bn128
 import json
 import rust_chiquito  # rust bindings
 
-from dsl import CircuitContext, StepTypeContext, StepTypeSetupContext
-from chiquito_ast import StepType, First, Last, Step
-from cb import eq
+from dsl import CircuitContext, StepTypeContext
 from chiquito_ast import StepType, First, Last, Step
 from cb import eq
 from query import Queriable
@@ -23,8 +21,9 @@ class Fibonacci(CircuitContext):
         )  # `self.a` is required instead of `a`, because steps need to access `circuit.a`.
         self.b: Queriable = self.forward("b")
 
-        self.fibo_step: StepTypeContext = self.step_type(FiboStep(self, "fibo_step"))
-        self.fibo_last_step: StepTypeContext = self.step_type(
+        self.fibo_step = self.step_type(
+            FiboStep(self, "fibo_step"))
+        self.fibo_last_step = self.step_type(
             FiboLastStep(self, "fibo_last_step")
         )
 
@@ -53,23 +52,17 @@ class Fibonacci(CircuitContext):
 
 
 class FiboStep(StepTypeContext):
-    def __init__(self: FiboStep, circuit: Fibonacci, step_type_name: str):
-        super().__init__(
-            step_type_name
-        )  # Pass the id and annotation of handler to a new StepTypeContext instance.
+    def setup(self: FiboStep):
         self.c = self.internal(
             "c"
         )  # `self.c` is required instead of `c`, because wg needs to access `self.c`.
-
-        def setup_def(ctx: StepTypeSetupContext):
-            ctx.constr(eq(circuit.a + circuit.b, self.c))
-            ctx.transition(eq(circuit.b, circuit.a.next()))
-            ctx.transition(eq(self.c, circuit.b.next()))
-
-        self.setup(setup_def)
+        self.constr(eq(self.circuit.a + self.circuit.b, self.c))
+        self.transition(eq(self.circuit.b, self.circuit.a.next()))
+        self.transition(eq(self.c, self.circuit.b.next()))
 
     def wg(self: FiboStep, circuit: Fibonacci):
-        def wg_def(ctx: StepInstance, values: Tuple[int, int]):  # Any instead of Args
+        # Any instead of Args
+        def wg_def(ctx: StepInstance, values: Tuple[int, int]):
             a_value, b_value = values
             # print(f"fib step wg: {a_value}, {b_value}, {a_value + b_value}")
             ctx.assign(circuit.a, F(a_value))
@@ -80,19 +73,16 @@ class FiboStep(StepTypeContext):
 
 
 class FiboLastStep(StepTypeContext):
-    def __init__(self: FiboStep, circuit: Fibonacci, step_type: StepType):
-        super().__init__(step_type)
+    def setup(self: FiboLastStep):
         self.c = self.internal("c")
-
-        def setup_def(ctx: StepTypeSetupContext):
-            ctx.constr(eq(circuit.a + circuit.b, self.c))
-
-        self.setup(setup_def)
+        self.constr(eq(self.circuit.a + self.circuit.b, self.c))
 
     def wg(self: FiboLastStep, circuit: Fibonacci):
-        def wg_def(ctx: StepInstance, values: Tuple[int, int]):  # Any instead of Args
+        # Any instead of Args
+        def wg_def(ctx: StepInstance, values: Tuple[int, int]):
             a_value, b_value = values
-            print(f"fib last step wg: {a_value}, {b_value}, {a_value + b_value}\n")
+            print(
+                f"fib last step wg: {a_value}, {b_value}, {a_value + b_value}\n")
             ctx.assign(circuit.a, F(a_value))
             ctx.assign(circuit.b, F(b_value))
             ctx.assign(self.c, F(a_value + b_value))
