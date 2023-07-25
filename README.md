@@ -15,35 +15,15 @@ Then, run the following to build the rust bindings.
 maturin develop
 ```
 
-Finally, run fibonacci.py file in the virtual environment using the following command:
+Finally, run fibonacci.py file using the following command:
 ```
-python3 .env/src/fibonacci.py
+python3 pychiquito/fibonacci.py
 ```
 
-You should see a print out of the parsed Rust AST circuit using the Debug trait. Run the command again if it errors out, as it's not super stable for reasons I'm still investigating.
+You should see a print out of the parsed Rust AST circuit and TraceWitness. All Halo2 and Chiquito Debug messages for generating and verifying proof should also appear in the terminal.
 
 # Technical Design
-Python front end -> Python AST object -> serialize to JSON string -> pass JSON string to Rust using PyO3 -> deserialize JSON string to Chiquito AST
+Python front end -> Python AST object/TraceWitness -> serialize to JSON string -> pass JSON string to Rust using PyO3 -> deserialize JSON string to Chiquito AST/TraceWitness -> store AST in Rust HashMap<UUID, AST> -> pass back UUID to Python -> generate and verify proof from Python with AST UUID and TraceWitness JSON
 ## Notes:
-- The process is likewise for `TraceWitness`.
 - Rust bindings to expose to Python are in lib.rs
-- `Deserialize` trait for Rust Chiquito AST and its sub types is implemented in frontend.rs of Rust Chiquito: https://github.com/privacy-scaling-explorations/chiquito
-
-
-# TODOs
-- Python functions for creating AST in PyChiquito
-  - Status: DONE and debugged with Fibo example.
-- Python functions for creating WG object and FG in PyChiquito
-  - Status: DONE and debugged WG with Fibo example. FG not debugged yet.
-- Convert Rust module to Python library using PyO3 and Maturin
-  - Status: DONE for AST.
-- Design Json serialization standard in Python.
-  - Status: DONE for AST and TraceWitness.
-- Implement Json deserialization with Serde in Rust.
-  - Status: DONE for AST and TraceWitness.
-- Call Chiquito rust functions from Python with AST and WG object in Python
-  - Status: DONE for AST and TraceWitness.
-- Convert TraceWitness to assignment in Rust.
-  - Status: Still researching due to the complexity of `AssignmentGenerator`.
-- Create Rust bindings for generating and verifiying proof, using Halo2 boilerplate.
-  - Status: Not started.
+- Boilerplate functions and `Deserialize` trait implementations for Rust Chiquito AST, TraceWitness, and their sub types are in frontend.rs of Rust Chiquito: https://github.com/privacy-scaling-explorations/chiquito
