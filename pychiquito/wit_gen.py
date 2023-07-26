@@ -92,14 +92,13 @@ class TraceContext:
     def add(
         self: TraceContext, circuit: Circuit, step: StepType, args: Any
     ):  # Use StepType instead of StepTypeWGHandler, because StepType contains step type id and `wg` method that returns witness generation function.
-        witness = StepInstance.new(step.step_type.id)
-        step.wg(circuit)
+        step.wg(args)
         if step.step_type.wg is None:
             raise ValueError(
                 f"Step type {step.step_type.name} does not have a witness generator."
             )
-        step.step_type.wg(witness, args)
-        self.witness.step_instances.append(witness)
+        step.step_type.wg(args)
+        self.witness.step_instances.append(step.step_instance)
 
     def set_height(self: TraceContext, height: int):
         self.witness.height = height
