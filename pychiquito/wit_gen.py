@@ -6,7 +6,7 @@ from query import Queriable, Fixed
 from util import F
 
 # Commented out to avoid circular reference
-# from dsl import CircuitContext, StepTypeContext
+# from dsl import Circuit, StepType
 
 ###########
 # wit_gen #
@@ -90,8 +90,8 @@ class TraceContext:
     witness: TraceWitness = field(default_factory=TraceWitness)
 
     def add(
-        self: TraceContext, circuit: CircuitContext, step: StepTypeContext, args: Any
-    ):  # Use StepTypeContext instead of StepTypeWGHandler, because StepTypeContext contains step type id and `wg` method that returns witness generation function.
+        self: TraceContext, circuit: Circuit, step: StepType, args: Any
+    ):  # Use StepType instead of StepTypeWGHandler, because StepType contains step type id and `wg` method that returns witness generation function.
         witness = StepInstance.new(step.step_type.id)
         step.wg(circuit)
         if step.step_type.wg is None:
