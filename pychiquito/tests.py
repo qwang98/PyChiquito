@@ -1,5 +1,5 @@
 from chiquito_ast import (
-    StepType,
+    ASTStepType,
     ASTConstraint,
     TransitionConstraint,
     InternalSignal,
@@ -17,11 +17,11 @@ from expr import Const, Sum, Mul
 # print(Forward(ForwardSignal(1, "a"), True).__json__())
 # print(Shared(SharedSignal(0, "a"), 2).__json__())
 # print(Fixed(FixedSignal("a"), 2).__json__())
-# print(StepTypeNext(StepType.new("fibo")).__json__())
+# print(StepTypeNext(ASTStepType.new("fibo")).__json__())
 # print(ASTConstraint("constraint", Sum([Const(1), Mul([Internal(InternalSignal("a")), Const(3)])])).__json__())
 # print(TransitionConstraint("trans", Sum([Const(1), Mul([Internal(InternalSignal("a")), Const(3)])])).__json__())
 print(
-    StepType(
+    ASTStepType(
         1,
         "fibo",
         [InternalSignal("a"), InternalSignal("b")],

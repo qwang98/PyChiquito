@@ -6,7 +6,7 @@ from typing import List
 from util import F
 from expr import Expr, Const, Neg, to_expr, ToExpr
 from query import StepTypeNext
-from chiquito_ast import StepType
+from chiquito_ast import ASTStepType
 
 ##########
 # dsl/cb #
@@ -165,7 +165,7 @@ def isz(constraint: ToConstraint) -> Constraint:
     )
 
 
-def if_next_step(step_type: StepType, constraint: ToConstraint) -> Constraint:
+def if_next_step(step_type: ASTStepType, constraint: ToConstraint) -> Constraint:
     constraint = to_constraint(constraint)
     return Constraint(
         f"if(next step is {step_type.annotation})then({constraint.annotation})",
@@ -174,7 +174,7 @@ def if_next_step(step_type: StepType, constraint: ToConstraint) -> Constraint:
     )
 
 
-def next_step_must_be(step_type: StepType) -> Constraint:
+def next_step_must_be(step_type: ASTStepType) -> Constraint:
     return Constraint(
         f"next step must be {step_type.annotation}",
         Constraint.cb_not(StepTypeNext(step_type)),
@@ -182,7 +182,7 @@ def next_step_must_be(step_type: StepType) -> Constraint:
     )
 
 
-def next_step_must_not_be(step_type: StepType) -> Constraint:
+def next_step_must_not_be(step_type: ASTStepType) -> Constraint:
     return Constraint(
         f"next step must not be {step_type.annotation}",
         StepTypeNext(step_type),
