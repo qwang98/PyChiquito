@@ -64,12 +64,10 @@ class Circuit:
 
     # import_halo2_advice and import_halo2_fixed are ignored.
 
-    def step_type(self: Circuit, step_type_context: StepType) -> StepType:
+    def step_type(self: Circuit, step_type: StepType) -> StepType:
         assert self.mode == CircuitMode.SETUP
-        self.circuit.add_step_type(
-            step_type_context.step_type, step_type_context.step_type.name
-        )
-        return step_type_context
+        self.circuit.add_step_type(step_type.step_type, step_type.step_type.name)
+        return step_type
 
     def step_type_def(self: StepType) -> StepType:
         assert self.mode == CircuitMode.SETUP
@@ -83,15 +81,15 @@ class Circuit:
     def fixed_gen(self: Circuit, fixed_gen_def: Callable[[FixedGenContext], None]):
         self.circuit.set_fixed_gen(fixed_gen_def)
 
-    def pragma_first_step(self: Circuit, step_type_context: StepType) -> None:
+    def pragma_first_step(self: Circuit, step_type: StepType) -> None:
         assert self.mode == CircuitMode.SETUP
-        self.circuit.first_step = step_type_context.step_type.id
-        print(f"first step id: {step_type_context.step_type.id}")
+        self.circuit.first_step = step_type.step_type.id
+        print(f"first step id: {step_type.step_type.id}")
 
-    def pragma_last_step(self: Circuit, step_type_context: StepType) -> None:
+    def pragma_last_step(self: Circuit, step_type: StepType) -> None:
         assert self.mode == CircuitMode.SETUP
-        self.circuit.last_step = step_type_context.step_type.id
-        print(f"last step id: {step_type_context.step_type.id}")
+        self.circuit.last_step = step_type.step_type.id
+        print(f"last step id: {step_type.step_type.id}")
 
     def pragma_num_steps(self: Circuit, num_steps: int) -> None:
         assert self.mode == CircuitMode.SETUP
@@ -221,9 +219,3 @@ class StepType:
         self.step_instance.assign(lhs, rhs)
 
     # TODO: Implement add_lookup after lookup abstraction PR is merged.
-
-
-def circuit(name: str, circuit_context_def: Callable[[Circuit], None]) -> AST:
-    ctx = Circuit()
-    circuit_context_def(ctx)
-    return ctx.circuit
