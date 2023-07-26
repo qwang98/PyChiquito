@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 from typing import Callable, Any
 from dataclasses import dataclass
 
@@ -80,38 +81,43 @@ class CircuitContext:
         self.circuit.q_enable = False
 
 
+class StepTypeMode(Enum):
+    NoMode = 0
+    SETUP = 1
+    WG = 2
+
+
 class StepTypeContext:
-    def __init__(self: StepTypeContext, step_type_name: str):
+
+    def __init__(self: StepTypeContext, circuit, step_type_name: str, ):
         self.step_type = StepType.new(step_type_name)
+        self.circuit = circuit
+        self.mode = StepTypeMode.SETUP
+        self.setup()
+        self.mode = StepTypeMode.NoMode
 
     def internal(self: StepTypeContext, name: str) -> Internal:
-        return Internal(self.step_type.add_signal(name))
+        assert (self.mode == StepTypeMode.SETUP)
 
-    def setup(
-        self: StepTypeContext, setup_def: Callable[[StepTypeSetupContext], None]
-    ) -> None:
-        ctx = StepTypeSetupContext(self.step_type)
-        setup_def(ctx)
-        print("setup called")
+        return Internal(self.step_type.add_signal(name))
 
     def wg(
         self: StepTypeContext, wg_def: Callable[[TraceContext, Any], None]
     ):  # Args are Any.
         self.step_type.set_wg(wg_def)
 
+    def constr(self: StepTypeContext, constraint: ToConstraint):
+        assert (self.mode == StepTypeMode.SETUP)
 
-@dataclass
-class StepTypeSetupContext:
-    step_type: StepType
-
-    def constr(self: StepTypeSetupContext, constraint: ToConstraint):
         constraint = to_constraint(constraint)
-        StepTypeSetupContext.enforce_constraint_typing(constraint)
+        StepTypeContext.enforce_constraint_typing(constraint)
         self.step_type.add_constr(constraint.annotation, constraint.expr)
 
-    def transition(self: StepTypeSetupContext, constraint: ToConstraint):
+    def transition(self: StepTypeContext, constraint: ToConstraint):
+        assert (self.mode == StepTypeMode.SETUP)
+
         constraint = to_constraint(constraint)
-        StepTypeSetupContext.enforce_constraint_typing(constraint)
+        StepTypeContext.enforce_constraint_typing(constraint)
         self.step_type.add_transition(constraint.annotation, constraint.expr)
 
     def enforce_constraint_typing(constraint: Constraint):

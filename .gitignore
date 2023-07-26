@@ -17,3 +17,6 @@ classes.png
 packages.dot
 packages.png
 
+.env
+.vscode
+.devcontainer
