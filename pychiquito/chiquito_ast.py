@@ -57,17 +57,20 @@ class ASTCircuit:
             else ""
         )
         forward_signals_str = (
-            "\n\t\t" + ",\n\t\t".join(str(fs) for fs in self.forward_signals) + "\n\t"
+            "\n\t\t" + ",\n\t\t".join(str(fs)
+                                      for fs in self.forward_signals) + "\n\t"
             if self.forward_signals
             else ""
         )
         shared_signals_str = (
-            "\n\t\t" + ",\n\t\t".join(str(ss) for ss in self.shared_signals) + "\n\t"
+            "\n\t\t" + ",\n\t\t".join(str(ss)
+                                      for ss in self.shared_signals) + "\n\t"
             if self.shared_signals
             else ""
         )
         fixed_signals_str = (
-            "\n\t\t" + ",\n\t\t".join(str(fs) for fs in self.fixed_signals) + "\n\t"
+            "\n\t\t" + ",\n\t\t".join(str(fs)
+                                      for fs in self.fixed_signals) + "\n\t"
             if self.fixed_signals
             else ""
         )
@@ -150,13 +153,15 @@ class ASTCircuit:
         self: ASTCircuit, trace_def: Callable[[TraceContext, Any], None]
     ):  # TraceArgs are Any.
         if self.trace is not None:
-            raise Exception("ASTCircuit cannot have more than one trace generator.")
+            raise Exception(
+                "Circuit cannot have more than one trace generator.")
         else:
             self.trace = trace_def
 
     def set_fixed_gen(self, fixed_gen_def: Callable[[FixedGenContext], None]):
         if self.fixed_gen is not None:
-            raise Exception("ASTCircuit cannot have more than one fixed generator.")
+            raise Exception(
+                "Circuit cannot have more than one fixed generator.")
         else:
             self.fixed_gen = fixed_gen_def
 
@@ -204,7 +209,8 @@ class ASTStepType:
         )
         constraints_str = (
             "\n\t\t\t\t"
-            + ",\n\t\t\t\t".join(str(constraint) for constraint in self.constraints)
+            + ",\n\t\t\t\t".join(str(constraint)
+                                 for constraint in self.constraints)
             + "\n\t\t\t"
             if self.constraints
             else ""
@@ -218,7 +224,8 @@ class ASTStepType:
         )
         annotations_str = (
             "\n\t\t\t\t"
-            + ",\n\t\t\t\t".join(f"{k}: {v}" for k, v in self.annotations.items())
+            + ",\n\t\t\t\t".join(f"{k}: {v}" for k,
+                                 v in self.annotations.items())
             + "\n\t\t\t"
             if self.annotations
             else ""
@@ -261,7 +268,8 @@ class ASTStepType:
         condition = TransitionConstraint(annotation, expr)
         self.transition_constraints.append(condition)
 
-    def set_wg(self, wg_def: Callable[[StepInstance, Any], None]):  # Args are Any.
+    # Args are Any.
+    def set_wg(self, wg_def: Callable[[StepInstance, Any], None]):
         self.wg = wg_def
 
     def __eq__(self: ASTStepType, other: ASTStepType) -> bool:
