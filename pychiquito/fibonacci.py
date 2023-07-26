@@ -1,16 +1,10 @@
 from __future__ import annotations
-from typing import Any, Tuple
-from py_ecc import bn128
-import json
+from typing import Tuple
 
 from dsl import Circuit, StepType
-from chiquito_ast import ASTStepType, First, Last, Step
 from cb import eq
 from query import Queriable
-from wit_gen import TraceContext, StepInstance, TraceGenerator
-from util import CustomEncoder, F
-
-F = bn128.FQ
+from util import F
 
 
 class Fibonacci(Circuit):

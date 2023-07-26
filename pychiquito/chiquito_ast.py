@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Callable, List, Dict, Optional, Any, Tuple
 from dataclasses import dataclass, field, asdict
 
-from wit_gen import TraceContext, FixedGenContext, StepInstance, TraceWitness
+from wit_gen import TraceContext, FixedGenContext, StepInstance
 from expr import Expr
 from util import uuid
 from query import Queriable

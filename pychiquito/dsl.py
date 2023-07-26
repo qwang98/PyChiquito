@@ -5,9 +5,9 @@ from dataclasses import dataclass
 import rust_chiquito  # rust bindings
 import json
 
-from chiquito_ast import AST, ASTStepType, ExposeOffset, ForwardSignal, SharedSignal
+from chiquito_ast import AST, ASTStepType, ExposeOffset
 from query import Internal, Forward, Queriable, Shared, Fixed
-from wit_gen import FixedGenContext, TraceContext, StepInstance, TraceWitness
+from wit_gen import FixedGenContext, TraceContext, StepInstance
 from cb import Constraint, Typing, ToConstraint, to_constraint
 from util import CustomEncoder, F
 
