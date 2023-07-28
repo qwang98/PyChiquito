@@ -89,31 +89,6 @@ class TraceWitness:
         return json.dumps(self, cls=CustomEncoder, indent=4)
 
 
-@dataclass
-class TraceContext:
-    witness: TraceWitness = field(default_factory=TraceWitness)
-
-    def add(self: TraceContext, circuit: Circuit, step: StepType, args: Any):
-        step_instance: StepInstance = step.gen_step_instance(args)
-        self.witness.step_instances.append(step_instance)
-
-    def set_height(self: TraceContext, height: int):
-        self.witness.height = height
-
-
-Trace = Callable[[TraceContext, Any], None]  # TraceArgs are Any.
-
-
-@dataclass
-class TraceGenerator:
-    trace: Trace
-
-    def generate(self: TraceGenerator, args: Any) -> TraceWitness:  # Args are Any.
-        ctx = TraceContext()
-        self.trace(ctx, args)
-        return ctx.witness
-
-
 FixedAssigment = Dict[Queriable, List[F]]
 
 

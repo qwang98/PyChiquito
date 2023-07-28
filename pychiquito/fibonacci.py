@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Tuple
 
-from dsl import Circuit, StepType, print_ast, print_witness, convert_and_print_witness
+from dsl import Circuit, StepType
 from cb import eq
 from query import Queriable
 from util import F
@@ -64,11 +64,5 @@ class FiboLastStep(StepType):
 
 fibo = Fibonacci()
 fibo_witness = fibo.gen_witness(None)
-fibo.convert_and_print_ast()
 fibo.ast_to_halo2()
 fibo.verify_proof(fibo_witness)
-
-# Debug methods
-# print_ast(fibo.ast)
-# print_witness(fibo_witness)
-# convert_and_print_witness(fibo_witness)
