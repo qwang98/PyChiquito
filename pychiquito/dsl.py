@@ -7,7 +7,7 @@ import json
 
 from chiquito_ast import ASTCircuit, ASTStepType, ExposeOffset
 from query import Internal, Forward, Queriable, Shared, Fixed
-from wit_gen import FixedGenContext, TraceContext, StepInstance
+from wit_gen import FixedGenContext, TraceContext, StepInstance, TraceWitness
 from cb import Constraint, Typing, ToConstraint, to_constraint
 from util import CustomEncoder, F
 
@@ -68,12 +68,12 @@ class Circuit:
     def pragma_first_step(self: Circuit, step_type: StepType) -> None:
         assert self.mode == CircuitMode.SETUP
         self.ast.first_step = step_type.step_type.id
-        print(f"first step id: {step_type.step_type.id}")
+        # print(f"first step id: {step_type.step_type.id}")
 
     def pragma_last_step(self: Circuit, step_type: StepType) -> None:
         assert self.mode == CircuitMode.SETUP
         self.ast.last_step = step_type.step_type.id
-        print(f"last step id: {step_type.step_type.id}")
+        # print(f"last step id: {step_type.step_type.id}")
 
     def pragma_num_steps(self: Circuit, num_steps: int) -> None:
         assert self.mode == CircuitMode.SETUP
@@ -83,78 +83,56 @@ class Circuit:
         assert self.mode == CircuitMode.SETUP
         self.ast.q_enable = False
 
-    def gen_witness(self: Circuit, args: Any) -> TraceWitness:
-        self.mode = CircuitMode.Trace
-        self.trace_context = TraceContext()
-        self.ast.set_trace(self.trace)
-        self.trace(args)
-        return self.trace_context.witness
-
     def add(self: Circuit, step_type: StepType, args: Any):
-        print(self)
-        print(step_type)
-        print(args)
         assert self.mode == CircuitMode.Trace
         self.trace_context.add(self, step_type, args)
 
-    def print_ast(self: Circuit):
-        print("Print ASTCircuit using custom __str__ method in python:")
-        print(self.ast)
+    def gen_witness(self: Circuit, args: Any) -> TraceWitness:
+        self.mode = CircuitMode.Trace
+        self.trace_context = TraceContext()
+        self.trace(args)
+        self.mode = CircuitMode.NoMode
+        witness = self.trace_context.witness
+        del self.trace_context
+        return witness
 
-    def get_ast_json(self: Circuit, print_json=False) -> str:
-        ast_json: str = json.dumps(self.ast, cls=CustomEncoder, indent=4)
-        if print_json:
-            print("Print ASTCircuit using __json__ method in python:")
-            print(ast_json)
-        return ast_json
+    def get_ast_json(self: Circuit) -> str:
+        return json.dumps(self.ast, cls=CustomEncoder, indent=4)
 
-    def print_witness(self: Circuit):
-        print("Print TraceWitness using custom __str__ method in python:")
-        print(self.trace_context.witness)
-
-    def get_witness_json(self: Circuit, print_json=False) -> str:
-        witness_json: str = json.dumps(
-            self.trace_context.witness, cls=CustomEncoder, indent=4
-        )
-        if print_json:
-            print("Print TraceWitness using __json__ method in python:")
-            print(witness_json)
-        return witness_json
-
-    def convert_and_print_ast(self: Circuit, print_ast=False):
+    def convert_and_print_ast(self: Circuit):
         ast_json: str = self.get_ast_json()
-        if print_ast:
-            print(
-                "Call rust bindings, parse json to Chiquito ASTCircuit, and print using Debug trait:"
-            )
-            print(rust_chiquito.convert_and_print_ast(ast_json))
+        print(
+            "Call rust bindings, parse json to Chiquito ASTCircuit, and print using Debug trait:"
+        )
+        rust_chiquito.convert_and_print_ast(ast_json)
 
-    def convert_and_print_witness(self: Circuit, print_witness=False):
-        witness_json: str = self.get_witness_json()
-        if print_witness:
-            print(
-                "Call rust bindings, parse json to Chiquito TraceWitness, and print using Debug trait:"
-            )
-            print(rust_chiquito.convert_and_print_trace_witness(witness_json))
-
-    def ast_to_halo2(self: Circuit, print_ast_id=False):
+    def ast_to_halo2(self: Circuit):
         ast_json: str = self.get_ast_json()
         self.rust_ast_id: int = rust_chiquito.ast_to_halo2(ast_json)
-        if print_ast_id:
-            print("Parse json to Chiquito Halo2, and obtain UUID:")
-            print(self.rust_ast_id)
 
-    def verify_proof(self: Circuit, print_inputs=False):
+    def verify_proof(self: Circuit, witness: TraceWitness):
         if self.rust_ast_id == 0:
-            self.rust_ast_id = self.ast_to_halo2()
-        witness_json: str = self.get_witness_json()
-        if print_inputs:
-            print("Rust AST UUID:")
-            print(self.rust_ast_id)
-            print("Print TraceWitness using __json__ method in python:")
-            print(witness_json)
-            print("Verify ciruit with AST uuid and witness json:")
+            self.ast_to_halo2()
+        witness_json: str = witness.get_witness_json()
         rust_chiquito.verify_proof(witness_json, self.rust_ast_id)
+
+
+# Debug method
+def convert_and_print_witness(witness: TraceWitness):
+    witness_json: str = witness.get_witness_json()
+    rust_chiquito.convert_and_print_trace_witness(witness_json)
+
+
+# Debug method
+def print_ast(ast: ASTCircuit):
+    print("Print ASTCircuit using custom __str__ method in python:")
+    print(ast)
+
+
+# Debug method
+def print_witness(witness: TraceWitness):
+    print("Print TraceWitness using custom __str__ method in python:")
+    print(witness)
 
 
 class StepTypeMode(Enum):
@@ -167,11 +145,17 @@ class StepType:
     def __init__(self: StepType, circuit: Circuit, step_type_name: str):
         self.step_type = ASTStepType.new(step_type_name)
         self.circuit = circuit
-        self.step_instance = StepInstance.new(self.step_type.id)
         self.mode = StepTypeMode.SETUP
         self.setup()
+
+    def gen_step_instance(self: StepType, args: Any) -> StepInstance:
         self.mode = StepTypeMode.WG
-        self.step_type.set_wg(self.wg)
+        self.step_instance = StepInstance.new(self.step_type.id)
+        self.wg(args)
+        self.mode = StepTypeMode.NoMode
+        step_instance = self.step_instance
+        del self.step_instance
+        return step_instance
 
     def internal(self: StepType, name: str) -> Internal:
         assert self.mode == StepTypeMode.SETUP

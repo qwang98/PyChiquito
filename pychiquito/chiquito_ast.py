@@ -40,7 +40,6 @@ class ASTCircuit:
     fixed_signals: List[FixedSignal] = field(default_factory=list)
     exposed: List[Tuple[Queriable, ExposeOffset]] = field(default_factory=list)
     annotations: Dict[int, str] = field(default_factory=dict)
-    trace: Optional[Callable[[ASTStepType, Any], None]] = None
     fixed_gen: Optional[Callable] = None
     first_step: Optional[int] = None
     last_step: Optional[int] = None
@@ -94,7 +93,6 @@ class ASTCircuit:
             f"\tfixed_signals=[{fixed_signals_str}],\n"
             f"\texposed=[{exposed_str}],\n"
             f"\tannotations={{{annotations_str}}},\n"
-            f"\ttrace={self.trace},\n"
             f"\tfixed_gen={self.fixed_gen},\n"
             f"\tfirst_step={self.first_step},\n"
             f"\tlast_step={self.last_step},\n"
@@ -146,14 +144,6 @@ class ASTCircuit:
         self.annotations[step_type.id] = name
         self.step_types[step_type.id] = step_type
 
-    def set_trace(
-        self: ASTCircuit, trace_def: Callable[[TraceContext, Any], None]
-    ):  # TraceArgs are Any.
-        if self.trace is not None:
-            raise Exception("ASTCircuit cannot have more than one trace generator.")
-        else:
-            self.trace = trace_def
-
     def set_fixed_gen(self, fixed_gen_def: Callable[[FixedGenContext], None]):
         if self.fixed_gen is not None:
             raise Exception("ASTCircuit cannot have more than one fixed generator.")
@@ -187,12 +177,9 @@ class ASTStepType:
     constraints: List[ASTConstraint]
     transition_constraints: List[TransitionConstraint]
     annotations: Dict[int, str]
-    wg: Optional[
-        Callable[[StepInstance, Any], None]
-    ]  # Args are Any. Not passed to Rust Chiquito.
 
     def new(name: str) -> ASTStepType:
-        return ASTStepType(uuid(), name, [], [], [], {}, None)
+        return ASTStepType(uuid(), name, [], [], [], {})
 
     def __str__(self):
         signals_str = (

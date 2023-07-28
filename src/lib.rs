@@ -28,7 +28,6 @@ fn convert_and_print_trace_witness(json: &PyString) {
 #[pyfunction]
 fn ast_to_halo2(json: &PyString) -> u128 {
     let uuid = chiquito_ast_to_halo2(json.to_str().expect("PyString convertion failed."));
-    println!("{:?}", uuid);
 
     uuid
 }

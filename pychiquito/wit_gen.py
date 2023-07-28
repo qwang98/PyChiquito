@@ -1,9 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Callable, Any
+import json
 
 from query import Queriable, Fixed
-from util import F
+from util import F, CustomEncoder
 
 # Commented out to avoid circular reference
 # from dsl import Circuit, StepType
@@ -84,21 +85,17 @@ class TraceWitness:
             "height": self.height,
         }
 
+    def get_witness_json(self: TraceWitness) -> str:
+        return json.dumps(self, cls=CustomEncoder, indent=4)
+
 
 @dataclass
 class TraceContext:
     witness: TraceWitness = field(default_factory=TraceWitness)
 
-    def add(
-        self: TraceContext, circuit: Circuit, step: StepType, args: Any
-    ):  # Use StepType instead of StepTypeWGHandler, because StepType contains step type id and `wg` method that returns witness generation function.
-        step.wg(args)
-        if step.step_type.wg is None:
-            raise ValueError(
-                f"Step type {step.step_type.name} does not have a witness generator."
-            )
-        step.step_type.wg(args)
-        self.witness.step_instances.append(step.step_instance)
+    def add(self: TraceContext, circuit: Circuit, step: StepType, args: Any):
+        step_instance: StepInstance = step.gen_step_instance(args)
+        self.witness.step_instances.append(step_instance)
 
     def set_height(self: TraceContext, height: int):
         self.witness.height = height

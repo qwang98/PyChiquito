@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Tuple
 
-from dsl import Circuit, StepType
+from dsl import Circuit, StepType, print_ast, print_witness, convert_and_print_witness
 from cb import eq
 from query import Queriable
 from util import F
@@ -38,15 +38,13 @@ class Fibonacci(Circuit):
 
 class FiboStep(StepType):
     def setup(self: FiboStep):
-        self.c = self.internal(
-            "c"
-        )  # `self.c` is required instead of `c`, because wg needs to access `self.c`.
+        self.c = self.internal("c")
         self.constr(eq(self.circuit.a + self.circuit.b, self.c))
         self.transition(eq(self.circuit.b, self.circuit.a.next()))
         self.transition(eq(self.c, self.circuit.b.next()))
 
-    def wg(self: FiboStep, values: Tuple[int, int]):
-        a_value, b_value = values
+    def wg(self: FiboStep, args: Tuple[int, int]):
+        a_value, b_value = args
         self.assign(self.circuit.a, F(a_value))
         self.assign(self.circuit.b, F(b_value))
         self.assign(self.c, F(a_value + b_value))
@@ -65,10 +63,12 @@ class FiboLastStep(StepType):
 
 
 fibo = Fibonacci()
-fibo.print_ast()
-fibo.gen_witness(None)
-fibo.print_witness()
-fibo.convert_and_print_ast(print_ast=True)
-fibo.convert_and_print_witness(print_witness=True)
-fibo.ast_to_halo2(print_ast_id=True)
-fibo.verify_proof(print_inputs=True)
+fibo_witness = fibo.gen_witness(None)
+fibo.convert_and_print_ast()
+fibo.ast_to_halo2()
+fibo.verify_proof(fibo_witness)
+
+# Debug methods
+# print_ast(fibo.ast)
+# print_witness(fibo_witness)
+# convert_and_print_witness(fibo_witness)
