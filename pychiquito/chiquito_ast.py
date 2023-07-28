@@ -11,7 +11,7 @@ from query import Queriable
 # ast #
 #######
 
-# pub struct AST<F, TraceArgs> {
+# pub struct ASTCircuit<F, TraceArgs> {
 #     pub step_types: HashMap<u32, Rc<ASTStepType<F>>>,
 
 #     pub forward_signals: Vec<ForwardSignal>,
@@ -33,7 +33,7 @@ from query import Queriable
 
 
 @dataclass
-class AST:
+class ASTCircuit:
     step_types: Dict[int, ASTStepType] = field(default_factory=dict)
     forward_signals: List[ForwardSignal] = field(default_factory=list)
     shared_signals: List[SharedSignal] = field(default_factory=list)
@@ -48,7 +48,7 @@ class AST:
     q_enable: bool = True
     id: int = uuid()
 
-    def __str__(self: AST):
+    def __str__(self: ASTCircuit):
         step_types_str = (
             "\n\t\t"
             + ",\n\t\t".join(f"{k}: {v}" for k, v in self.step_types.items())
@@ -87,7 +87,7 @@ class AST:
         )
 
         return (
-            f"AST(\n"
+            f"ASTCircuit(\n"
             f"\tstep_types={{{step_types_str}}},\n"
             f"\tforward_signals=[{forward_signals_str}],\n"
             f"\tshared_signals=[{shared_signals_str}],\n"
@@ -103,7 +103,7 @@ class AST:
             f")"
         )
 
-    def __json__(self: AST):
+    def __json__(self: ASTCircuit):
         return {
             "step_types": {k: v.__json__() for k, v in self.step_types.items()},
             "forward_signals": [x.__json__() for x in self.forward_signals],
@@ -121,42 +121,42 @@ class AST:
             "id": self.id,
         }
 
-    def add_forward(self: AST, name: str, phase: int) -> ForwardSignal:
+    def add_forward(self: ASTCircuit, name: str, phase: int) -> ForwardSignal:
         signal = ForwardSignal(phase, name)
         self.forward_signals.append(signal)
         self.annotations[signal.id] = name
         return signal
 
-    def add_shared(self: AST, name: str, phase: int) -> SharedSignal:
+    def add_shared(self: ASTCircuit, name: str, phase: int) -> SharedSignal:
         signal = SharedSignal(phase, name)
         self.shared_signals.append(signal)
         self.annotations[signal.id] = name
         return signal
 
-    def add_fixed(self: AST, name: str) -> FixedSignal:
+    def add_fixed(self: ASTCircuit, name: str) -> FixedSignal:
         signal = FixedSignal(name)
         self.fixed_signals.append(signal)
         self.annotations[signal.id] = name
         return signal
 
-    def expose(self: AST, signal: Queriable, offset: ExposeOffset):
+    def expose(self: ASTCircuit, signal: Queriable, offset: ExposeOffset):
         self.exposed.append((signal, offset))
 
-    def add_step_type(self: AST, step_type: ASTStepType, name: str):
+    def add_step_type(self: ASTCircuit, step_type: ASTStepType, name: str):
         self.annotations[step_type.id] = name
         self.step_types[step_type.id] = step_type
 
     def set_trace(
-        self: AST, trace_def: Callable[[TraceContext, Any], None]
+        self: ASTCircuit, trace_def: Callable[[TraceContext, Any], None]
     ):  # TraceArgs are Any.
         if self.trace is not None:
-            raise Exception("AST cannot have more than one trace generator.")
+            raise Exception("ASTCircuit cannot have more than one trace generator.")
         else:
             self.trace = trace_def
 
     def set_fixed_gen(self, fixed_gen_def: Callable[[FixedGenContext], None]):
         if self.fixed_gen is not None:
-            raise Exception("AST cannot have more than one fixed generator.")
+            raise Exception("ASTCircuit cannot have more than one fixed generator.")
         else:
             self.fixed_gen = fixed_gen_def
 
