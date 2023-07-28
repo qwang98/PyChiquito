@@ -6,10 +6,6 @@ from expr import Expr
 # from chiquito_ast import InternalSignal, ForwardSignal, SharedSignal, FixedSignal, ASTStepType
 
 
-######################
-# ast/expr/queriable #
-######################
-
 # pub enum Queriable<F> {
 #     Internal(InternalSignal),
 #     Forward(ForwardSignal, bool),
@@ -140,6 +136,3 @@ class StepTypeNext(Queriable):
         return {
             "StepTypeNext": {"id": self.step_type.id, "annotation": self.step_type.name}
         }
-
-
-# Ignored Queriable::Halo2AdviceQuery and Queriable::Halo2FixedQuery.

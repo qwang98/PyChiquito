@@ -4,9 +4,6 @@ from dataclasses import dataclass
 
 from util import F
 
-############
-# ast/expr #
-############
 
 # pub enum Expr<F> {
 #     Const(F),
@@ -141,11 +138,7 @@ class Pow(Expr):
         return {"Pow": [self.expr.__json__(), self.pow]}
 
 
-# Ignored Expr::Halo2Expr.
-
-# Removed Constraint variant to avoid circular reference.
 ToExpr = Expr | int | F
-# | Constraint
 
 
 def to_expr(v: ToExpr) -> Expr:
@@ -158,8 +151,6 @@ def to_expr(v: ToExpr) -> Expr:
             return Neg(Const(F(-v)))
     elif isinstance(v, F):
         return Const(v)
-    # elif isinstance(v, Constraint):
-    #     return v.expr
     else:
         raise TypeError(
             f"Type {type(v)} is not ToExpr (one of Expr, int, F, or Constraint)."

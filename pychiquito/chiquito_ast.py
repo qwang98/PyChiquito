@@ -7,11 +7,8 @@ from expr import Expr
 from util import uuid
 from query import Queriable
 
-#######
-# ast #
-#######
 
-# pub struct ASTCircuit<F, TraceArgs> {
+# pub struct Circuit<F, TraceArgs> {
 #     pub step_types: HashMap<u32, Rc<ASTStepType<F>>>,
 
 #     pub forward_signals: Vec<ForwardSignal>,
@@ -157,7 +154,7 @@ class ASTCircuit:
             raise ValueError("ASTStepType not found.")
 
 
-# pub struct ASTStepType<F> {
+# pub struct StepType<F> {
 #     id: StepTypeUUID,
 
 #     pub name: String,
@@ -247,10 +244,6 @@ class ASTStepType:
     def add_transition(self: ASTStepType, annotation: str, expr: Expr):
         condition = TransitionConstraint(annotation, expr)
         self.transition_constraints.append(condition)
-
-    # Args are Any.
-    def set_wg(self, wg_def: Callable[[StepInstance, Any], None]):
-        self.wg = wg_def
 
     def __eq__(self: ASTStepType, other: ASTStepType) -> bool:
         if isinstance(self, ASTStepType) and isinstance(other, ASTStepType):

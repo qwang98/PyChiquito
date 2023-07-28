@@ -9,10 +9,6 @@ from util import F, CustomEncoder
 # Commented out to avoid circular reference
 # from dsl import Circuit, StepType
 
-###########
-# wit_gen #
-###########
-
 
 @dataclass
 class StepInstance:
@@ -42,7 +38,7 @@ class StepInstance:
             f"\t\t)"
         )
 
-    # For assignments, return "uuid: F" rather than "Queriable: F", because JSON doesn't accept Dict as key.
+    # For assignments, return "uuid: (Queriable, F)" rather than "Queriable: F", because JSON doesn't accept Dict as key.
     def __json__(self: StepInstance):
         return {
             "step_type_uuid": self.step_type_uuid,
@@ -111,7 +107,7 @@ class FixedGenContext:
 
     def is_fixed_queriable(q: Queriable) -> bool:
         match q.enum:
-            case Fixed(_, _):  # Ignored Halo2FixedQuery enum type.
+            case Fixed(_, _):
                 return True
             case _:
                 return False

@@ -7,19 +7,24 @@ from chiquito_ast import (
     SharedSignal,
     FixedSignal,
 )
-from query import Internal, Forward, Shared, Fixed
+from query import Internal, Forward, Shared, Fixed, StepTypeNext
 from expr import Const, Sum, Mul
 
-########
-# test #
-########
-# print(Internal(InternalSignal("a")).__json__())
-# print(Forward(ForwardSignal(1, "a"), True).__json__())
-# print(Shared(SharedSignal(0, "a"), 2).__json__())
-# print(Fixed(FixedSignal("a"), 2).__json__())
-# print(StepTypeNext(ASTStepType.new("fibo")).__json__())
-# print(ASTConstraint("constraint", Sum([Const(1), Mul([Internal(InternalSignal("a")), Const(3)])])).__json__())
-# print(TransitionConstraint("trans", Sum([Const(1), Mul([Internal(InternalSignal("a")), Const(3)])])).__json__())
+print(Internal(InternalSignal("a")).__json__())
+print(Forward(ForwardSignal(1, "a"), True).__json__())
+print(Shared(SharedSignal(0, "a"), 2).__json__())
+print(Fixed(FixedSignal("a"), 2).__json__())
+print(StepTypeNext(ASTStepType.new("fibo")).__json__())
+print(
+    ASTConstraint(
+        "constraint", Sum([Const(1), Mul([Internal(InternalSignal("a")), Const(3)])])
+    ).__json__()
+)
+print(
+    TransitionConstraint(
+        "trans", Sum([Const(1), Mul([Internal(InternalSignal("a")), Const(3)])])
+    ).__json__()
+)
 print(
     ASTStepType(
         1,

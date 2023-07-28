@@ -8,10 +8,6 @@ from expr import Expr, Const, Neg, to_expr, ToExpr
 from query import StepTypeNext
 from chiquito_ast import ASTStepType
 
-##########
-# dsl/cb #
-##########
-
 
 class Typing(Enum):
     Unknown = auto()
