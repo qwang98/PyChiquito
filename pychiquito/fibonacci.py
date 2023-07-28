@@ -24,7 +24,7 @@ class Fibonacci(Circuit):
         # self.expose(self.a, Last())
         # self.expose(self.a, Step(1))
 
-    def trace(self: Fibonacci):
+    def trace(self: Fibonacci, args: Any):
         self.add(self.fibo_step, (1, 1))
         a = 1
         b = 2
@@ -66,6 +66,7 @@ class FiboLastStep(StepType):
 
 fibo = Fibonacci()
 fibo.print_ast()
+fibo.gen_witness(None)
 fibo.print_witness()
 fibo.convert_and_print_ast(print_ast=True)
 fibo.convert_and_print_witness(print_witness=True)

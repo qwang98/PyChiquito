@@ -12,11 +12,6 @@ from cb import Constraint, Typing, ToConstraint, to_constraint
 from util import CustomEncoder, F
 
 
-#######
-# dsl #
-#######
-
-
 class CircuitMode(Enum):
     NoMode = 0
     SETUP = 1
@@ -30,10 +25,6 @@ class Circuit:
         self.rust_ast_id = 0
         self.mode = CircuitMode.SETUP
         self.setup()
-        self.mode = CircuitMode.Trace
-        self.ast.set_trace(self.trace)
-        self.trace()
-        # self.mode = CircuitMode.NoMode
 
     def forward(self: Circuit, name: str) -> Forward:
         assert self.mode == CircuitMode.SETUP
@@ -62,8 +53,6 @@ class Circuit:
         else:
             raise TypeError(f"Can only expose ForwardSignal or SharedSignal.")
 
-    # import_halo2_advice and import_halo2_fixed are ignored.
-
     def step_type(self: Circuit, step_type: StepType) -> StepType:
         assert self.mode == CircuitMode.SETUP
         self.ast.add_step_type(step_type.step_type, step_type.step_type.name)
@@ -72,11 +61,6 @@ class Circuit:
     def step_type_def(self: StepType) -> StepType:
         assert self.mode == CircuitMode.SETUP
         self.ast.add_step_type_def()
-
-    # def trace(
-    #     self: Circuit, trace_def: Callable[[TraceContext, Any], None]
-    # ):  # TraceArgs are Any.
-    #     self.ast.set_trace(trace_def)
 
     def fixed_gen(self: Circuit, fixed_gen_def: Callable[[FixedGenContext], None]):
         self.ast.set_fixed_gen(fixed_gen_def)
@@ -98,6 +82,13 @@ class Circuit:
     def pragma_disable_q_enable(self: Circuit) -> None:
         assert self.mode == CircuitMode.SETUP
         self.ast.q_enable = False
+
+    def gen_witness(self: Circuit, args: Any) -> TraceWitness:
+        self.mode = CircuitMode.Trace
+        self.trace_context = TraceContext()
+        self.ast.set_trace(self.trace)
+        self.trace(args)
+        return self.trace_context.witness
 
     def add(self: Circuit, step_type: StepType, args: Any):
         print(self)
@@ -181,17 +172,11 @@ class StepType:
         self.setup()
         self.mode = StepTypeMode.WG
         self.step_type.set_wg(self.wg)
-        # self.mode = StepTypeMode.NoMode
 
     def internal(self: StepType, name: str) -> Internal:
         assert self.mode == StepTypeMode.SETUP
 
         return Internal(self.step_type.add_signal(name))
-
-    # def wg(
-    #     self: StepType, wg_def: Callable[[TraceContext, Any], None]
-    # ):  # Args are Any.
-    #     self.step_type.set_wg(wg_def)
 
     def constr(self: StepType, constraint: ToConstraint):
         assert self.mode == StepTypeMode.SETUP

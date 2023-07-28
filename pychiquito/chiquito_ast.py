@@ -40,7 +40,7 @@ class ASTCircuit:
     fixed_signals: List[FixedSignal] = field(default_factory=list)
     exposed: List[Tuple[Queriable, ExposeOffset]] = field(default_factory=list)
     annotations: Dict[int, str] = field(default_factory=dict)
-    trace: Optional[Callable[[TraceContext, Any], None]] = None
+    trace: Optional[Callable[[ASTStepType, Any], None]] = None
     fixed_gen: Optional[Callable] = None
     first_step: Optional[int] = None
     last_step: Optional[int] = None
