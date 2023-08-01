@@ -1,6 +1,7 @@
 from __future__ import annotations
 from py_ecc import bn128
 from uuid import uuid1
+import json
 
 F = bn128.FQ
 
@@ -16,6 +17,13 @@ def json_method(self: F):
 
 
 F.__json__ = json_method
+
+
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, "__json__"):
+            return obj.__json__()
+        return super().default(obj)
 
 
 # int field is the u128 version of uuid.

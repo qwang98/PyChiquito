@@ -3,19 +3,15 @@ from __future__ import annotations
 from expr import Expr
 
 # Commented out to avoid circular reference
-# from chiquito_ast import InternalSignal, ForwardSignal, SharedSignal, FixedSignal, StepType
+# from chiquito_ast import InternalSignal, ForwardSignal, SharedSignal, FixedSignal, ASTStepType
 
-
-######################
-# ast/expr/queriable #
-######################
 
 # pub enum Queriable<F> {
 #     Internal(InternalSignal),
 #     Forward(ForwardSignal, bool),
 #     Shared(SharedSignal, i32),
 #     Fixed(FixedSignal, i32),
-#     StepTypeNext(StepTypeHandler),
+#     StepTypeNext(ASTStepTypeHandler),
 #     Halo2AdviceQuery(ImportedHalo2Advice, i32),
 #     Halo2FixedQuery(ImportedHalo2Fixed, i32),
 #     #[allow(non_camel_case_types)]
@@ -127,19 +123,16 @@ class Fixed(Queriable):
 
 
 class StepTypeNext(Queriable):
-    def __init__(self: StepTypeNext, step_type: StepType):
+    def __init__(self: StepTypeNext, step_type: ASTStepType):
         self.step_type = step_type
 
-    def uuid(self: StepType) -> int:
+    def uuid(self: ASTStepType) -> int:
         return self.id
 
-    def __str__(self: StepType) -> str:
+    def __str__(self: ASTStepType) -> str:
         return self.name
 
     def __json__(self):
         return {
             "StepTypeNext": {"id": self.step_type.id, "annotation": self.step_type.name}
         }
-
-
-# Ignored Queriable::Halo2AdviceQuery and Queriable::Halo2FixedQuery.

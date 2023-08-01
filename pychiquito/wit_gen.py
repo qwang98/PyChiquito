@@ -1,16 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Callable, Any
+import json
 
 from query import Queriable, Fixed
-from util import F
+from util import F, CustomEncoder
 
 # Commented out to avoid circular reference
-# from dsl import CircuitContext, StepTypeContext
-
-###########
-# wit_gen #
-###########
+# from dsl import Circuit, StepType
 
 
 @dataclass
@@ -41,7 +38,7 @@ class StepInstance:
             f"\t\t)"
         )
 
-    # For assignments, return "uuid: F" rather than "Queriable: F", because JSON doesn't accept Dict as key.
+    # For assignments, return "uuid: (Queriable, F)" rather than "Queriable: F", because JSON doesn't accept Dict as key.
     def __json__(self: StepInstance):
         return {
             "step_type_uuid": self.step_type_uuid,
@@ -84,38 +81,8 @@ class TraceWitness:
             "height": self.height,
         }
 
-
-@dataclass
-class TraceContext:
-    witness: TraceWitness = field(default_factory=TraceWitness)
-
-    def add(
-        self: TraceContext, circuit: CircuitContext, step: StepTypeContext, args: Any
-    ):  # Use StepTypeContext instead of StepTypeWGHandler, because StepTypeContext contains step type id and `wg` method that returns witness generation function.
-        witness = StepInstance.new(step.step_type.id)
-        step.wg(circuit)
-        if step.step_type.wg is None:
-            raise ValueError(
-                f"Step type {step.step_type.name} does not have a witness generator."
-            )
-        step.step_type.wg(witness, args)
-        self.witness.step_instances.append(witness)
-
-    def set_height(self: TraceContext, height: int):
-        self.witness.height = height
-
-
-Trace = Callable[[TraceContext, Any], None]  # TraceArgs are Any.
-
-
-@dataclass
-class TraceGenerator:
-    trace: Trace
-
-    def generate(self: TraceGenerator, args: Any) -> TraceWitness:  # Args are Any.
-        ctx = TraceContext()
-        self.trace(ctx, args)
-        return ctx.witness
+    def get_witness_json(self: TraceWitness) -> str:
+        return json.dumps(self, cls=CustomEncoder, indent=4)
 
 
 FixedAssigment = Dict[Queriable, List[F]]
@@ -140,7 +107,7 @@ class FixedGenContext:
 
     def is_fixed_queriable(q: Queriable) -> bool:
         match q.enum:
-            case Fixed(_, _):  # Ignored Halo2FixedQuery enum type.
+            case Fixed(_, _):
                 return True
             case _:
                 return False
