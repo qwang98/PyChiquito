@@ -83,7 +83,7 @@ class ASTCircuit:
         )
 
         return (
-            f"Circuit(\n"
+            f"ASTCircuit(\n"
             f"\tstep_types={{{step_types_str}}},\n"
             f"\tforward_signals=[{forward_signals_str}],\n"
             f"\tshared_signals=[{shared_signals_str}],\n"
@@ -209,7 +209,7 @@ class ASTStepType:
         )
 
         return (
-            f"StepType(\n"
+            f"ASTStepType(\n"
             f"\t\t\tid={self.id},\n"
             f"\t\t\tname='{self.name}',\n"
             f"\t\t\tsignals=[{signals_str}],\n"

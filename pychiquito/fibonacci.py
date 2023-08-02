@@ -63,7 +63,6 @@ class FiboLastStep(StepType):
 
 
 fibo = Fibonacci()
-print(fibo)
 fibo_witness = fibo.gen_witness(None)
 fibo.ast_to_halo2()
 fibo.verify_proof(fibo_witness)
