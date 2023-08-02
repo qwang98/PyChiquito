@@ -84,6 +84,22 @@ class TraceWitness:
     def get_witness_json(self: TraceWitness) -> str:
         return json.dumps(self, cls=CustomEncoder, indent=4)
 
+    def evil_witness_test(
+        self: TraceWitness,
+        step_instance_indices: List[int],
+        assignment_indices: List[int],
+        rhs: List[F],
+    ) -> TraceWitness:
+        if not len(step_instance_indices) == len(assignment_indices) == len(rhs):
+            raise ValueError(f"`evil_witness_test` inputs have different lengths.")
+        new_step_instances = self.step_instances.copy()
+        for i in range(len(step_instance_indices)):
+            keys = list(new_step_instances[step_instance_indices[i]].assignments.keys())
+            new_step_instances[step_instance_indices[i]].assignments[
+                keys[assignment_indices[i]]
+            ] = rhs[i]
+        return TraceWitness(new_step_instances, self.height)
+
 
 FixedAssigment = Dict[Queriable, List[F]]
 
