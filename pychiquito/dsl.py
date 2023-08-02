@@ -107,6 +107,9 @@ class Circuit:
         witness_json: str = witness.get_witness_json()
         rust_chiquito.verify_proof(witness_json, self.rust_ast_id)
 
+    def __str__(self: Circuit) -> str:
+        return self.ast.__str__()
+
 
 class StepTypeMode(Enum):
     NoMode = 0
