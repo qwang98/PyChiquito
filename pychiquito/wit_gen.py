@@ -54,7 +54,6 @@ Witness = List[StepInstance]
 @dataclass
 class TraceWitness:
     step_instances: Witness = field(default_factory=list)
-    height: int = 0
 
     def __str__(self: TraceWitness):
         step_instances_str = (
@@ -69,7 +68,6 @@ class TraceWitness:
         return (
             f"TraceWitness(\n"
             f"\tstep_instances={{{step_instances_str}}},\n"
-            f"\theight={self.height},\n"
             f")"
         )
 
@@ -77,8 +75,7 @@ class TraceWitness:
         return {
             "step_instances": [
                 step_instance.__json__() for step_instance in self.step_instances
-            ],
-            "height": self.height,
+            ]
         }
 
     def get_witness_json(self: TraceWitness) -> str:
