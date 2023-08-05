@@ -91,7 +91,7 @@ class TraceWitness:
             new_step_instances[step_instance_indices[i]].assignments[
                 keys[assignment_indices[i]]
             ] = rhs[i]
-        return TraceWitness(new_step_instances, self.height)
+        return TraceWitness(new_step_instances)
 
 
 FixedAssigment = Dict[Queriable, List[F]]
