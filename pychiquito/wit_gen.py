@@ -65,11 +65,7 @@ class TraceWitness:
             if self.step_instances
             else ""
         )
-        return (
-            f"TraceWitness(\n"
-            f"\tstep_instances={{{step_instances_str}}},\n"
-            f")"
-        )
+        return f"TraceWitness(\n" f"\tstep_instances={{{step_instances_str}}},\n" f")"
 
     def __json__(self: TraceWitness):
         return {

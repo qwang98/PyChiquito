@@ -102,7 +102,7 @@ class Circuit:
             ast_json: str = self.get_ast_json()
             self.rust_ast_id: int = rust_chiquito.ast_to_halo2(ast_json)
         witness_json: str = witness.get_witness_json()
-        rust_chiquito.verify_proof(witness_json, self.rust_ast_id)
+        rust_chiquito.halo2_mock_prover(witness_json, self.rust_ast_id)
 
     def __str__(self: Circuit) -> str:
         return self.ast.__str__()
