@@ -54,7 +54,6 @@ Witness = List[StepInstance]
 @dataclass
 class TraceWitness:
     step_instances: Witness = field(default_factory=list)
-    height: int = 0
 
     def __str__(self: TraceWitness):
         step_instances_str = (
@@ -66,19 +65,13 @@ class TraceWitness:
             if self.step_instances
             else ""
         )
-        return (
-            f"TraceWitness(\n"
-            f"\tstep_instances={{{step_instances_str}}},\n"
-            f"\theight={self.height},\n"
-            f")"
-        )
+        return f"TraceWitness(\n" f"\tstep_instances={{{step_instances_str}}},\n" f")"
 
     def __json__(self: TraceWitness):
         return {
             "step_instances": [
                 step_instance.__json__() for step_instance in self.step_instances
-            ],
-            "height": self.height,
+            ]
         }
 
     def get_witness_json(self: TraceWitness) -> str:
@@ -98,7 +91,7 @@ class TraceWitness:
             new_step_instances[step_instance_indices[i]].assignments[
                 keys[assignment_indices[i]]
             ] = rhs[i]
-        return TraceWitness(new_step_instances, self.height)
+        return TraceWitness(new_step_instances)
 
 
 FixedAssigment = Dict[Queriable, List[F]]

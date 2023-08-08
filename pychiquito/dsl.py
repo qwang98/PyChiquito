@@ -97,15 +97,12 @@ class Circuit:
     def get_ast_json(self: Circuit) -> str:
         return json.dumps(self.ast, cls=CustomEncoder, indent=4)
 
-    def ast_to_halo2(self: Circuit):
-        ast_json: str = self.get_ast_json()
-        self.rust_ast_id: int = rust_chiquito.ast_to_halo2(ast_json)
-
-    def verify_proof(self: Circuit, witness: TraceWitness):
+    def halo2_mock_prover(self: Circuit, witness: TraceWitness):
         if self.rust_ast_id == 0:
-            self.ast_to_halo2()
+            ast_json: str = self.get_ast_json()
+            self.rust_ast_id: int = rust_chiquito.ast_to_halo2(ast_json)
         witness_json: str = witness.get_witness_json()
-        rust_chiquito.verify_proof(witness_json, self.rust_ast_id)
+        rust_chiquito.halo2_mock_prover(witness_json, self.rust_ast_id)
 
     def __str__(self: Circuit) -> str:
         return self.ast.__str__()
