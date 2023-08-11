@@ -20,11 +20,15 @@ jobs:
       matrix:
         target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
     steps:
-      - uses: actions/checkout@v3
-      - name: Git Sumbodule Update
-        run: |
-          git pull --recurse-submodules
-          git submodule update --remote --recursive
+      # - uses: actions/checkout@v3
+      # - name: Git Sumbodule Update
+      #   run: |
+      #     git pull --recurse-submodules
+      #     git submodule update --remote --recursive
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
