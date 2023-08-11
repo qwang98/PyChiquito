@@ -51,7 +51,10 @@ jobs:
       matrix:
         target: [x64, x86]
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -74,7 +77,10 @@ jobs:
       matrix:
         target: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -93,7 +99,10 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
