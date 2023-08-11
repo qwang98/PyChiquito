@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 from typing import Callable, Any
-import rust_chiquito  # rust bindings
+from  chiquito import rust_chiquito  # rust bindings
 import json
 from chiquito import (chiquito_ast, wit_gen)
 
