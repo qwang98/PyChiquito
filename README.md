@@ -6,7 +6,9 @@ PyChiquito uses PyO3 and Maturin to expose Rust APIs to Python. Maturin requires
 Run the following script to create a Python virtual environment, install required packages, and build the project.
 
 ```bash
-git clone --recursive https://github.com/trangnv/chiquito # clone this repo and its submodules
+# clone this repo and its submodules
+git clone --recursive https://github.com/trangnv/chiquito
+
 # Create a virtual environment
 python3 -m venv .env
 
@@ -28,7 +30,7 @@ If the above doesn't work, follow the guide here: https://pyo3.rs/main/getting_s
 Run fibonacci.py example file using the following script:
 
 ```
-python3 pychiquito/fibonacci.py
+python3 test/fibonacci.py
 ```
 
 If setup is correct, you should see a print out of the parsed Rust AST circuit and TraceWitness. All Halo2 and Chiquito Debug messages for generating and verifying proof should also appear in the terminal.
