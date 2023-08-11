@@ -16,8 +16,7 @@ python3 -m venv .env
 source .env/bin/activate
 
 # Install the required packages
-pip install maturin
-pip install py_ecc
+pip install -r requirements.txt
 
 # Build the project
 maturin develop

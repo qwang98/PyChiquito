@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Tuple
 
-# from chiquito import *
+# from chiquito import (dsl, cb, query, util)
 # from dsl import Circuit, StepType
 # from cb import eq
 # from query import Queriable
