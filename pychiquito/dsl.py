@@ -22,6 +22,7 @@ class Circuit:
         self.ast = ASTCircuit()
         self.witness = TraceWitness()
         self.rust_ast_id = 0
+        self.num_step_instances = 0
         self.mode = CircuitMode.SETUP
         self.setup()
 
@@ -82,8 +83,18 @@ class Circuit:
 
     def add(self: Circuit, step_type: StepType, args: Any):
         assert self.mode == CircuitMode.Trace
+        if self.num_step_instances >= self.ast.num_steps:
+            raise ValueError(f"Number of step instances exceeds {self.ast.num_steps}")
+        self.num_step_instances += 1
         step_instance: StepInstance = step_type.gen_step_instance(args)
         self.witness.step_instances.append(step_instance)
+    
+    def needs_padding(self: Circuit) -> bool:
+        return self.num_step_instances < self.ast.num_steps
+    
+    def padding(self: Circuit, step_type: StepType, args: Any):
+        while(self.needs_padding()):
+            self.add(step_type, args)
 
     def gen_witness(self: Circuit, args: Any) -> TraceWitness:
         self.mode = CircuitMode.Trace
