@@ -97,6 +97,7 @@ class Circuit:
             self.add(step_type, args)
 
     def gen_witness(self: Circuit, args: Any) -> TraceWitness:
+        self.num_step_instances = 0
         self.mode = CircuitMode.Trace
         self.witness = TraceWitness()
         self.trace(args)
