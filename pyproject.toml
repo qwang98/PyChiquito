@@ -3,7 +3,7 @@ requires = ["maturin>=1.1,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "rust_chiquito"
+name = "chiquito"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Rust",
@@ -13,5 +13,7 @@ classifiers = [
 
 
 [tool.maturin]
+bindings = 'pyo3'
 features = ["pyo3/extension-module"]
-python-source = "pychiquito"
+python-source = "python"
+module-name = "chiquito.rust_chiquito"
