@@ -1,15 +1,14 @@
 from __future__ import annotations
 from enum import Enum
 from typing import Callable, Any
-from  chiquito import rust_chiquito  # rust bindings
 import json
-from chiquito import (chiquito_ast, wit_gen)
 
 from chiquito.chiquito_ast import ASTCircuit, ASTStepType, ExposeOffset
 from chiquito.query import Internal, Forward, Queriable, Shared, Fixed
 from chiquito.wit_gen import FixedGenContext, StepInstance, TraceWitness
 from chiquito.cb import Constraint, Typing, ToConstraint, to_constraint
 from chiquito.util import CustomEncoder, F
+from chiquito.rust_chiquito import ast_to_halo2, halo2_mock_prover
 
 
 class CircuitMode(Enum):
@@ -83,8 +82,17 @@ class Circuit:
 
     def add(self: Circuit, step_type: StepType, args: Any):
         assert self.mode == CircuitMode.Trace
+        if len(self.witness.step_instances) >= self.ast.num_steps:
+            raise ValueError(f"Number of step instances exceeds {self.ast.num_steps}")
         step_instance: StepInstance = step_type.gen_step_instance(args)
         self.witness.step_instances.append(step_instance)
+
+    def needs_padding(self: Circuit) -> bool:
+        return len(self.witness.step_instances) < self.ast.num_steps
+
+    def padding(self: Circuit, step_type: StepType, args: Any):
+        while self.needs_padding():
+            self.add(step_type, args)
 
     def gen_witness(self: Circuit, args: Any) -> TraceWitness:
         self.mode = CircuitMode.Trace
@@ -101,9 +109,9 @@ class Circuit:
     def halo2_mock_prover(self: Circuit, witness: TraceWitness):
         if self.rust_ast_id == 0:
             ast_json: str = self.get_ast_json()
-            self.rust_ast_id: int = rust_chiquito.ast_to_halo2(ast_json)
+            self.rust_ast_id: int = ast_to_halo2(ast_json)
         witness_json: str = witness.get_witness_json()
-        rust_chiquito.halo2_mock_prover(witness_json, self.rust_ast_id)
+        halo2_mock_prover(witness_json, self.rust_ast_id)
 
     def __str__(self: Circuit) -> str:
         return self.ast.__str__()
