@@ -22,7 +22,6 @@ class Circuit:
         self.ast = ASTCircuit()
         self.witness = TraceWitness()
         self.rust_ast_id = 0
-        self.num_step_instances = 0
         self.mode = CircuitMode.SETUP
         self.setup()
 
