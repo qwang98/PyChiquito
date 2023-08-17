@@ -1,8 +1,6 @@
 use chiquito::{
     ast::Circuit,
-    frontend::pychiquito::{
-        chiquito_ast_to_halo2, chiquito_halo2_mock_prover, chiquito_print_plaf_witness,
-    },
+    frontend::pychiquito::{chiquito_ast_to_halo2, chiquito_halo2_mock_prover},
     wit_gen::TraceWitness,
 };
 use halo2_proofs::halo2curves::bn256::Fr;
@@ -42,20 +40,11 @@ fn halo2_mock_prover(witness_json: &PyString, ast_uuid: &PyLong) {
     );
 }
 
-#[pyfunction]
-fn print_plaf_witness(witness_json: &PyString, ast_uuid: &PyLong) {
-    chiquito_print_plaf_witness(
-        witness_json.to_str().expect("PyString convertion failed."),
-        ast_uuid.extract().expect("PyLong convertion failed."),
-    );
-}
-
 #[pymodule]
 fn rust_chiquito(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(convert_and_print_ast, m)?)?;
     m.add_function(wrap_pyfunction!(convert_and_print_trace_witness, m)?)?;
     m.add_function(wrap_pyfunction!(ast_to_halo2, m)?)?;
     m.add_function(wrap_pyfunction!(halo2_mock_prover, m)?)?;
-    m.add_function(wrap_pyfunction!(print_plaf_witness, m)?)?;
     Ok(())
 }
