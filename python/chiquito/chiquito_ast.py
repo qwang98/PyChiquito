@@ -1,9 +1,8 @@
 from __future__ import annotations
-from typing import Callable, List, Dict, Optional, Any, Tuple
+from typing import Callable, List, Dict, Optional, Tuple
 from dataclasses import dataclass, field, asdict
-# from chiquito import wit_gen, expr, query, util
 
-from chiquito.wit_gen import FixedGenContext, StepInstance
+from chiquito.wit_gen import FixedGenContext
 from chiquito.expr import Expr
 from chiquito.util import uuid
 from chiquito.query import Queriable

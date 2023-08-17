@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, List, Callable, Any
+from typing import Dict, List
 import json
 
 from chiquito.query import Queriable, Fixed
