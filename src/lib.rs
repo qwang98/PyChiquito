@@ -1,6 +1,8 @@
 use chiquito::{
     ast::Circuit,
-    frontend::pychiquito::{chiquito_ast_to_halo2, chiquito_halo2_mock_prover, chiquito_print_plaf_witness},
+    frontend::pychiquito::{
+        chiquito_ast_to_halo2, chiquito_halo2_mock_prover, chiquito_print_plaf_witness,
+    },
     wit_gen::TraceWitness,
 };
 use halo2_proofs::halo2curves::bn256::Fr;
