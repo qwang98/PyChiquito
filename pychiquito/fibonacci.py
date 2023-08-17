@@ -2,7 +2,6 @@ from dsl import Circuit, StepType
 from cb import eq
 from util import F
 from chiquito_ast import Last
-import rust_chiquito
 
 
 class FiboFirstStep(StepType):
