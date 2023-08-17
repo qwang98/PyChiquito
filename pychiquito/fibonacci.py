@@ -2,6 +2,8 @@ from dsl import Circuit, StepType
 from cb import eq
 from util import F
 from chiquito_ast import Last
+import rust_chiquito
+
 
 class FiboFirstStep(StepType):
     def setup(self):
@@ -20,6 +22,7 @@ class FiboFirstStep(StepType):
         self.assign(self.c, F(a_value + b_value))
         self.assign(self.circuit.n, F(n_value))
 
+
 class FiboStep(StepType):
     def setup(self):
         self.c = self.internal("c")
@@ -35,6 +38,7 @@ class FiboStep(StepType):
         self.assign(self.c, F(a_value + b_value))
         self.assign(self.circuit.n, F(n_value))
 
+
 class Padding(StepType):
     def setup(self):
         self.transition(eq(self.circuit.b, self.circuit.b.next()))
@@ -46,12 +50,13 @@ class Padding(StepType):
         self.assign(self.circuit.b, F(b_value))
         self.assign(self.circuit.n, F(n_value))
 
+
 class Fibonacci(Circuit):
     def setup(self):
         self.a = self.forward("a")
         self.b = self.forward("b")
         self.n = self.forward("n")
-        
+
         self.fibo_first_step = self.step_type(FiboFirstStep(self, "fibo_first_step"))
         self.fibo_step = self.step_type(FiboStep(self, "fibo_step"))
         self.padding = self.step_type(Padding(self, "padding"))
@@ -62,7 +67,7 @@ class Fibonacci(Circuit):
 
         self.expose(self.b, Last())
         self.expose(self.n, Last())
-        
+
     def trace(self, n):
         self.add(self.fibo_first_step, (1, 1, n))
         a = 1
@@ -72,8 +77,9 @@ class Fibonacci(Circuit):
             prev_a = a
             a = b
             b += prev_a
-        while(self.needs_padding()):
+        while self.needs_padding():
             self.add(self.padding, (a, b, n))
+
 
 fibo = Fibonacci()
 fibo_witness = fibo.gen_witness(7)
