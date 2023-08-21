@@ -15,8 +15,8 @@ class Mimc7Constants(Circuit):
 
     def fixed_gen(self):
         for i, round_key in enumerate(ROUND_KEYS):
-            self.assign(self.lookup_row, F(i))
-            self.assign(self.lookup_c, F(round_key))
+            self.assign(i, self.lookup_row, F(i))
+            self.assign(i, self.lookup_c, F(round_key))
 
 
 class Mimc7Circuit(Circuit):
