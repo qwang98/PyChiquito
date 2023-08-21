@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List
 import json
 
-from chiquito.query import Queriable, Fixed
-from chiquito.util import F, CustomEncoder
+from query import Queriable, Fixed
+from util import F, CustomEncoder
 
 # Commented out to avoid circular reference
 # from dsl import Circuit, StepType
@@ -106,17 +106,10 @@ class FixedGenContext:
         return FixedGenContext({}, num_steps)
 
     def assign(self: FixedGenContext, offset: int, lhs: Queriable, rhs: F):
-        if not FixedGenContext.is_fixed_queriable(lhs):
+        if not isinstance(lhs, Fixed):
             raise ValueError(f"Cannot assign to non-fixed signal.")
         if lhs in self.assignments.keys():
             self.assignments[lhs][offset] = rhs
         else:
             self.assignments[lhs] = [F.zero()] * self.num_steps
             self.assignments[lhs][offset] = rhs
-
-    def is_fixed_queriable(q: Queriable) -> bool:
-        match q.enum:
-            case Fixed(_, _):
-                return True
-            case _:
-                return False

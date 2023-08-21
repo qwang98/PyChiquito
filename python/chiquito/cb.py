@@ -3,10 +3,11 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import List
 
-from chiquito.util import F
-from chiquito.expr import Expr, Const, Neg, to_expr, ToExpr
-from chiquito.query import StepTypeNext
-from chiquito.chiquito_ast import ASTStepType
+from util import F
+from expr import Expr, Const, Neg, to_expr, ToExpr
+from query import StepTypeNext
+from chiquito_ast import ASTStepType
+from lb import InPlaceLookupBuilder, LookupTable
 
 
 class Typing(Enum):
@@ -197,7 +198,12 @@ def rlc(exprs: List[ToExpr], randomness: Expr) -> Expr:
         return Expr(Const(F(0)))
 
 
-# TODO: Implement lookup table after the lookup abstraction PR is merged.
+def lookup() -> InPlaceLookupBuilder:
+    return InPlaceLookupBuilder()
+
+
+def table() -> LookupTable:
+    return LookupTable()
 
 
 ToConstraint = Constraint | Expr | int | F
