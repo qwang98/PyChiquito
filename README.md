@@ -1,3 +1,6 @@
+# THIS REPOSTITORY HAS NOW BEEN MERGED TO THE PSE CHIQUITO REPOSITORY UNDER https://github.com/privacy-scaling-explorations/chiquito/tree/main/src/frontend/python
+# ALL FUTURE DEVELOPMENTS WILL HAPPEN THERE
+
 # Quick Start
 
 ## Setup
